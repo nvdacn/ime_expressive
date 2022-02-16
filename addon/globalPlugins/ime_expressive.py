@@ -8,7 +8,7 @@ import NVDAHelper
 from NVDAObjects.UIA import UIA
 from NVDAObjects.behaviors import CandidateItem
 from keyboardHandler import KeyboardInputGesture
-
+from tones import beep
 
 pt=0
 lastCandidate=''
@@ -37,6 +37,8 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 	entryGestures = {
 		'kb:upArrow': 'pressKey',
 		'kb:downArrow': 'pressKey',
+		'kb:nvda+d': 'pressKeyUp',
+		'kb:nvda+f': 'pressKeyDown',
 		'kb:[': 'selectLeft',
 		'kb:]': 'selectRight',
 }
@@ -267,6 +269,12 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 					self.speakCharacter(tt)
 		self.old_text=text
 		self.old_p= p
+
+	def script_pressKeyUp(self,gesture):
+		KeyboardInputGesture.fromName("uparrow").send()
+
+	def script_pressKeyDown(self,gesture):
+		KeyboardInputGesture.fromName("downarrow").send()
 
 	def script_pressKey(self,gesture):
 		keyCode=gesture.vkCode
