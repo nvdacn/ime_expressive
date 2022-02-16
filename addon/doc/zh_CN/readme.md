@@ -68,7 +68,7 @@
 
 ## 更多信息
 
-有关本插件的后续更新以及 NVDA 的更多中文资讯欢迎访问 [NVDA 中文站 wwww.nvdacn.com][1]。
+有关本插件的后续更新以及 NVDA 的更多中文资讯欢迎访问 [NVDA 中文站 www.nvdacn.com][1]。
 
 [1]:https://www.nvdacn.com/
 [2]:https://nvdacn.com/index.php/archives/806/

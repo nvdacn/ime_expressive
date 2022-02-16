@@ -8,7 +8,7 @@ import NVDAHelper
 from NVDAObjects.UIA import UIA
 from NVDAObjects.behaviors import CandidateItem
 from keyboardHandler import KeyboardInputGesture
-from tones import beep
+
 
 pt=0
 lastCandidate=''
@@ -35,20 +35,16 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 		pass
 
 	entryGestures = {
-		'kb:upArrow':'upArrowKey',
-		'kb:downArrow':'downArrowKey',
-		'kb:[':'selectLeft',
-		'kb:]':'selectRight',
-		'kb:1':'key1',
-		'kb:2':'key2',
-		'kb:3':'key3',
-		'kb:4':'key4',
-		'kb:5':'key5',
-		'kb:6':'key6',
-		'kb:7':'key7',
-		'kb:8':'key8',
-		'kb:9':'key9',
+		'kb:upArrow': 'pressKey',
+		'kb:downArrow': 'pressKey',
+		'kb:[': 'selectLeft',
+		'kb:]': 'selectRight',
 }
+
+# Maps all 9 numeric keyboard keys to the apropriate gesture.
+# It was done this way to avoid code repetition.
+	for keyboardKey in range(1, 10):
+		entryGestures[f'kb:{keyboardKey}'] = 'pressKey'
 
 	selectedCandidate=''
 	candidateList=[]
@@ -272,46 +268,10 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 		self.old_text=text
 		self.old_p= p
 
-	def script_upArrowKey(self,gesture):
-		gesture.send()
-
-	def script_downArrowKey(self,gesture):
-		gesture.send()
-
-	def script_key1(self,gesture):
-		self.selectedIndex=1
-		gesture.send()
-
-	def script_key2(self,gesture):
-		self.selectedIndex=2
-		gesture.send()
-
-	def script_key3(self,gesture):
-		self.selectedIndex=3
-		gesture.send()
-
-	def script_key4(self,gesture):
-		self.selectedIndex=4
-		gesture.send()
-
-	def script_key5(self,gesture):
-		self.selectedIndex=5
-		gesture.send()
-
-	def script_key6(self,gesture):
-		self.selectedIndex=6
-		gesture.send()
-
-	def script_key7(self,gesture):
-		self.selectedIndex=7
-		gesture.send()
-
-	def script_key8(self,gesture):
-		self.selectedIndex=8
-		gesture.send()
-
-	def script_key9(self,gesture):
-		self.selectedIndex=9
+	def script_pressKey(self,gesture):
+		keyCode=gesture.vkCode
+		if keyCode >=49 and keyCode <=57:
+			self.selectedIndex=int(chr(keyCode))
 		gesture.send()
 
 	def script_selectLeft(self,gesture):

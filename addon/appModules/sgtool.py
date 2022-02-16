@@ -8,47 +8,17 @@ from keyboardHandler import KeyboardInputGesture
 
 class AppModule(appModuleHandler.AppModule):
 
-	def script_tabKey(self,gesture):
-		KeyboardInputGesture.fromName("tab").send()
-		newObject=api.getFocusObject()
-		speech.speakObject(newObject)
-
-	def script_shiftTabKey(self,gesture):
-		KeyboardInputGesture.fromName("shift+tab").send()
-		newObject=api.getFocusObject()
-		speech.speakObject(newObject)
-
-	def script_upArrowKey(self,gesture):
-		KeyboardInputGesture.fromName("upArrow").send()
-		newObject=api.getFocusObject()
-		speech.speakObject(newObject)
-
-	def script_downArrowKey(self,gesture):
-		KeyboardInputGesture.fromName("downArrow").send()
-		newObject=api.getFocusObject()
-		speech.speakObject(newObject)
-
-	def script_leftArrowKey(self,gesture):
-		KeyboardInputGesture.fromName("leftArrow").send()
-		newObject=api.getFocusObject()
-		speech.speakObject(newObject)
-
-	def script_rightKey(self,gesture):
-		KeyboardInputGesture.fromName("rightArrow").send()
-		newObject=api.getFocusObject()
-		speech.speakObject(newObject)
-
-	def script_spaceKey(self,gesture):
-		KeyboardInputGesture.fromName("space").send()
+	def script_pressKey(self,gesture):
+		gesture.send()
 		newObject=api.getFocusObject()
 		speech.speakObject(newObject)
 
 	__gestures = {
-"kb:tab":"tabKey",
-"kb:shift+tab":"shiftTabKey",
-"kb:upArrow":"upArrowKey",
-"kb:downArrow":"downArrowKey",
-"kb:leftArrow":"leftArrowKey",
-"kb:rightArrow":"rightArrowKey",
-"kb:space":"spaceKey",
+"kb:tab":"pressKey",
+"kb:shift+tab":"pressKey",
+"kb:upArrow":"pressKey",
+"kb:downArrow":"pressKey",
+"kb:leftArrow":"pressKey",
+"kb:rightArrow":"pressKey",
+"kb:space":"pressKey",
 }
