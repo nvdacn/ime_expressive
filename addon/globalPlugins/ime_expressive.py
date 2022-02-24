@@ -14,7 +14,6 @@ pt=0
 lastCandidate=''
 
 class GlobalPlugin(globalPluginHandler.GlobalPlugin):
-	scriptCategory = '中文输入法朗读加速'
 
 	def __init__(self):
 		super(GlobalPlugin, self).__init__()
@@ -37,7 +36,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 	entryGestures = {
 		'kb:upArrow': 'pressKey',
 		'kb:downArrow': 'pressKey',
-		'kb:nvda+d': 'pressKeyUp',
+		'kb:nvda+s': 'pressKeyUp',
 		'kb:nvda+f': 'pressKeyDown',
 		'kb:[': 'selectLeft',
 		'kb:]': 'selectRight',
@@ -55,6 +54,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 		global pt,lastCandidate
 		ct=time.time()
 		if candidatesString and ct-pt>0.05:
+			isc=True
 			if inputMethod=='ms':
 				lastCandidate=''
 			else:
@@ -76,25 +76,51 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 					for i in l:
 						c+=1
 						t+=i+str(c)+'； '
-					self.sayString(t)
+					self.speakCharacter(t,isp=False)
 					return
 				else:
 					self.speakCharacter(candidatesString+str(selectionIndex+1))
 					return
-			if config.conf["inputComposition"]["announceSelectedCandidate"]:
+			elif not config.conf["inputComposition"]["announceSelectedCandidate"] and not config.conf["inputComposition"]["alwaysIncludeShortCharacterDescriptionInCandidateName"]:
 				self.bindGestures (self.entryGestures)
 				if config.conf["inputComposition"]["reportReadingStringChanges"]:
 					self.speakCharacter(candidate+str(selectionIndex+1))
 				else:
 					self.speakCharacter(candidate)
-			else:
+			elif config.conf["inputComposition"]["announceSelectedCandidate"] and config.conf["inputComposition"]["alwaysIncludeShortCharacterDescriptionInCandidateName"]:
+				self.bindGestures (self.entryGestures)
+				if len(candidate)>2 and unicodedata.category(candidate[2])=='Lo':
+					isc=False
+					if config.conf["inputComposition"]["reportReadingStringChanges"]:
+						self.speakCharacter(candidate+str(selectionIndex+1))
+					else:
+						self.speakCharacter(candidate)
+
+				candidate=self.getDescribedSymbols(candidate)
+				if config.conf["inputComposition"]["reportReadingStringChanges"]:
+					candidate=candidate+str(selectionIndex+1)
+				self.speakCharacter(candidate,isc=isc)
+			elif config.conf["inputComposition"]["alwaysIncludeShortCharacterDescriptionInCandidateName"]:
+				self.bindGestures (self.entryGestures)
+				candidate=self.getDescribedSymbols(candidate)
+				if config.conf["inputComposition"]["reportReadingStringChanges"]:
+					candidate=candidate+str(selectionIndex+1)
+				self.speakCharacter(candidate,isc=isc)
+			elif config.conf["inputComposition"]["announceSelectedCandidate"]:
 				self.bindGestures (self.entryGestures)
 				if len(candidate)>2 and unicodedata.category(candidate[2])=='Lo':
 					if config.conf["inputComposition"]["reportReadingStringChanges"]:
+						self.speakCharacter(candidate+str(selectionIndex+1))
+					else:
+						self.speakCharacter(candidate)
+				else:
+					candidate=self.getDescribedSymbols(candidate)
+					if config.conf["inputComposition"]["reportReadingStringChanges"]:
 						candidate=candidate+str(selectionIndex+1)
-					self.speakCharacter(candidate)
-					return
-			if config.conf["inputComposition"]["alwaysIncludeShortCharacterDescriptionInCandidateName"]:
+					self.speakCharacter(candidate,isc=isc)
+			pt=ct
+
+	def getDescribedSymbols(self,candidate):
 				describedSymbols=[]
 				for symbol in candidate:
 					try:
@@ -110,11 +136,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 					else:
 						describedSymbols.append(symbol)
 				candidate=' '.join(describedSymbols)
-				if not config.conf["inputComposition"]["announceSelectedCandidate"]:
-					if config.conf["inputComposition"]["reportReadingStringChanges"]:
-						candidate=candidate+str(selectionIndex+1)
-				self.speakCharacter(candidate,isc=(not config.conf["inputComposition"]["announceSelectedCandidate"]))
-			pt=ct
+				return candidate
 
 	def handleInputCompositionStart(self,compositionString,selectionStart,selectionEnd,isReading):
 		pass
@@ -179,16 +201,18 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 		self.msCandidateDict={}
 		self.clearGestureBindings ()
 
-	def sayString(self,string):
-		queueHandler.queueFunction(queueHandler.eventQueue,speech.cancelSpeech)
-		queueHandler.queueFunction(queueHandler.eventQueue,speech.speakMessage,string)
-
-	def speakCharacter(self,character,isc=True):
+	def speakCharacter(self,character,isc=True,isp=True):
 		if isc:
 			queueHandler.queueFunction(queueHandler.eventQueue,speech.cancelSpeech)
 		character=character.replace('(','')
 		character=character.replace(')','')
-		queueHandler.queueFunction(queueHandler.eventQueue,speech.speakText,character, symbolLevel=characterProcessing.SymbolLevel.ALL)
+		if character.isupper():
+			queueHandler.queueFunction(queueHandler.eventQueue,speech.speakTypedCharacters,character)
+		else:
+			if isp:
+				queueHandler.queueFunction(queueHandler.eventQueue,speech.speakText,character, symbolLevel=characterProcessing.SymbolLevel.ALL)
+			else:
+				queueHandler.queueFunction(queueHandler.eventQueue,speech.speakMessage,character)
 
 	pmsTime=0
 	def event_UIA_notification(self, obj, nextHandler):
@@ -208,7 +232,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 				while o.role==15:
 					t+=o.lastChild.name+o.firstChild.name+'； '
 					o=o.next
-				self.sayString(t)
+				self.speakCharacter(t,isp=False)
 			else:
 				self.handleInputCandidateListUpdate(obj.lastChild.name,int(obj.firstChild.name)-1,'ms')
 		else:
