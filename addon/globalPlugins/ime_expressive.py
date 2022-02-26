@@ -206,7 +206,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 			queueHandler.queueFunction(queueHandler.eventQueue,speech.cancelSpeech)
 		character=character.replace('(','')
 		character=character.replace(')','')
-		if character.isupper():
+		if len(character)==1 and character.isupper():
 			queueHandler.queueFunction(queueHandler.eventQueue,speech.speakTypedCharacters,character)
 		else:
 			if isp:
