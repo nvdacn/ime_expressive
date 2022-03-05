@@ -3,17 +3,86 @@
 # This file is covered by the GNU General Public License.
 # See the file COPYING for more details.
 
-import globalPluginHandler,speech,characterProcessing,unicodedata,keyboardHandler,time,config,queueHandler,ui,brailleInput,wx,api,textInfos,eventHandler
-import NVDAHelper
+import globalPluginHandler,speech,characterProcessing,unicodedata,time,config,queueHandler,brailleInput,wx,api,textInfos,eventHandler,gui,NVDAHelper
 from NVDAObjects.UIA import UIA
 from NVDAObjects.behaviors import CandidateItem
 from keyboardHandler import KeyboardInputGesture
-from tones import beep
+
+confspec={
+	'alwaysIncludeShortCharacterDescriptionInCandidateName' : 'boolean(default=True)',
+	'shortCharacterDescriptionInCandidateNumber' : 'integer(default=2)',
+	'selectedLeftOrRight': 'integer(default=0)',
+}
+config.conf.spec["inputExpressive"] = confspec
 
 pt=0
 lastCandidate=''
 
+descriptionNumber=config.conf["inputExpressive"]["shortCharacterDescriptionInCandidateNumber"]
+announceDescription=config.conf["inputExpressive"]["alwaysIncludeShortCharacterDescriptionInCandidateName"]
+
+entryGestures = {
+		'kb:upArrow': 'pressKey',
+		'kb:downArrow': 'pressKey',
+		'kb:nvda+s': 'pressKeyUp',
+		'kb:nvda+f': 'pressKeyDown',
+}
+
+if config.conf["inputExpressive"]["selectedLeftOrRight"]==1:
+	entryGestures["kb:["] = "selectLeft"
+	entryGestures["kb:]"] = "selectRight"
+elif config.conf["inputExpressive"]["selectedLeftOrRight"]==2:
+	entryGestures["kb:,"] = "selectLeft"
+	entryGestures["kb:."] = "selectRight"
+elif config.conf["inputExpressive"]["selectedLeftOrRight"]==3:
+	entryGestures["kb:pageUp"] = "selectLeft"
+	entryGestures["kb:pageDown"] = "selectRight"
+
+for keyboardKey in range(1, 10):
+		entryGestures[f'kb:{keyboardKey}'] = 'pressKey'
+
+candidateIncludesShortCharacterDescriptionCheckBox=None
+descriptionNumberEditor=None
+selectedLeftOrRight=None
+
+def makeSettings(self, settingsSizer):
+		global candidateIncludesShortCharacterDescriptionCheckBox,descriptionNumberEditor,selectedLeftOrRight
+		settingsSizerHelper = gui.guiHelper.BoxSizerHelper(self, sizer=settingsSizer)
+		descriptionNumberEditor=settingsSizerHelper .addLabeledControl(_('自定义解释字数'), gui.nvdaControls.SelectOnFocusSpinCtrl,min=0,max=512,initial=config.conf["inputExpressive"]["shortCharacterDescriptionInCandidateNumber"])
+		descriptionNumberEditor.SetValue(config.conf["inputExpressive"]["shortCharacterDescriptionInCandidateNumber"])
+
+		candidateIncludesShortCharacterDescriptionCheckBox=wx.CheckBox(self,wx.ID_ANY,label=_("超过设定解释字数后，先读1遍候选然后再解释"))
+		candidateIncludesShortCharacterDescriptionCheckBox.SetValue(config.conf["inputExpressive"]["alwaysIncludeShortCharacterDescriptionInCandidateName"])
+		settingsSizer.Add(candidateIncludesShortCharacterDescriptionCheckBox,border=10,flag=wx.BOTTOM)
+
+		selectedLeftOrRight = settingsSizerHelper .addLabeledControl(_('以词定字按键'), wx.Choice, choices = ['无', '左 / 右方括号', '逗号 / 句号', '上 / 下翻页'])
+		selectedLeftOrRight.SetSelection (config.conf["inputExpressive"]["selectedLeftOrRight"])
+
+gui.settingsDialogs.InputCompositionPanel.makeSettings=makeSettings
+
+def onSave(self):
+		global announceDescription,descriptionNumber,entryGestures
+		config.conf["inputExpressive"]["alwaysIncludeShortCharacterDescriptionInCandidateName"]=announceDescription=candidateIncludesShortCharacterDescriptionCheckBox.IsChecked()
+		config.conf["inputExpressive"]["shortCharacterDescriptionInCandidateNumber"]=descriptionNumber=descriptionNumberEditor.GetValue()
+		config.conf["inputExpressive"]["selectedLeftOrRight"]=selectedLeftOrRight.GetSelection()
+		if config.conf["inputExpressive"]["selectedLeftOrRight"]==1:
+			[entryGestures.pop(key, None) for key in ['kb:,', 'kb:.', 'kb:PageUp', 'kb:pageDown']]
+			entryGestures["kb:["] = "selectLeft"
+			entryGestures["kb:]"] = "selectRight"
+		elif config.conf["inputExpressive"]["selectedLeftOrRight"]==2:
+			[entryGestures.pop(key, None) for key in ['kb:[', 'kb:]', 'kb:PageUp', 'kb:pageDown']]
+			entryGestures["kb:,"] = "selectLeft"
+			entryGestures["kb:."] = "selectRight"
+		elif config.conf["inputExpressive"]["selectedLeftOrRight"]==3:
+			[entryGestures.pop(key, None) for key in ['kb:[', 'kb:]', 'kb:,', 'kb:.']]
+			entryGestures["kb:pageUp"] = "selectLeft"
+			entryGestures["kb:pageDown"] = "selectRight"
+		else:
+			[entryGestures.pop(key, None) for key in ['kb:,', 'kb:.', 'kb:PageUp', 'kb:pageDown', 'kb:[', 'kb:]']]
+gui.settingsDialogs.InputCompositionPanel.onSave=onSave
+
 class GlobalPlugin(globalPluginHandler.GlobalPlugin):
+	scriptCategory = '输入法朗读体验优化'
 
 	def __init__(self):
 		super(GlobalPlugin, self).__init__()
@@ -24,28 +93,11 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 		NVDAHelper.handleInputCompositionStart=self.handleInputCompositionStart
 		NVDAHelper.handleInputCompositionEnd=self.handleInputCompositionEnd
 
-	def getFormattedCandidateName(self,number,candidate):
-		pass
+	def getFormattedCandidateName(self,number,candidate): pass
 
-	def getFormattedCandidateDescription(self,candidate):
-		pass
+	def getFormattedCandidateDescription(self,candidate): pass
 
-	def reportFocus(self):
-		pass
-
-	entryGestures = {
-		'kb:upArrow': 'pressKey',
-		'kb:downArrow': 'pressKey',
-		'kb:nvda+s': 'pressKeyUp',
-		'kb:nvda+f': 'pressKeyDown',
-		'kb:[': 'selectLeft',
-		'kb:]': 'selectRight',
-}
-
-# Maps all 9 numeric keyboard keys to the apropriate gesture.
-# It was done this way to avoid code repetition.
-	for keyboardKey in range(1, 10):
-		entryGestures[f'kb:{keyboardKey}'] = 'pressKey'
+	def reportFocus(self): pass
 
 	selectedCandidate=''
 	candidateList=[]
@@ -54,7 +106,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 		global pt,lastCandidate
 		ct=time.time()
 		if candidatesString and ct-pt>0.05:
-			isc=True
+
 			if inputMethod=='ms':
 				lastCandidate=''
 			else:
@@ -67,57 +119,25 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 				candidate=candidatesString
 			self.selectedCandidate=candidate
 			self.issg=True
-			if config.conf["inputComposition"]["autoReportAllCandidates"]:
-				self.bindGestures (self.entryGestures)
-				t=''
-				if '\n' in candidatesString:
-					l=candidatesString.split('\n')
-					c=0
-					for i in l:
-						c+=1
-						t+=i+str(c)+'； '
-					self.speakCharacter(t,isp=False)
-					return
-				else:
-					self.speakCharacter(candidatesString+str(selectionIndex+1))
-					return
-			elif not config.conf["inputComposition"]["announceSelectedCandidate"] and not config.conf["inputComposition"]["alwaysIncludeShortCharacterDescriptionInCandidateName"]:
-				self.bindGestures (self.entryGestures)
-				if config.conf["inputComposition"]["reportReadingStringChanges"]:
-					self.speakCharacter(candidate+str(selectionIndex+1))
-				else:
-					self.speakCharacter(candidate)
-			elif config.conf["inputComposition"]["announceSelectedCandidate"] and config.conf["inputComposition"]["alwaysIncludeShortCharacterDescriptionInCandidateName"]:
-				self.bindGestures (self.entryGestures)
-				if len(candidate)>2 and unicodedata.category(candidate[2])=='Lo':
-					isc=False
-					if config.conf["inputComposition"]["reportReadingStringChanges"]:
-						self.speakCharacter(candidate+str(selectionIndex+1))
-					else:
-						self.speakCharacter(candidate)
 
-				candidate=self.getDescribedSymbols(candidate)
-				if config.conf["inputComposition"]["reportReadingStringChanges"]:
-					candidate=candidate+str(selectionIndex+1)
-				self.speakCharacter(candidate,isc=isc)
-			elif config.conf["inputComposition"]["alwaysIncludeShortCharacterDescriptionInCandidateName"]:
-				self.bindGestures (self.entryGestures)
-				candidate=self.getDescribedSymbols(candidate)
-				if config.conf["inputComposition"]["reportReadingStringChanges"]:
-					candidate=candidate+str(selectionIndex+1)
-				self.speakCharacter(candidate,isc=isc)
-			elif config.conf["inputComposition"]["announceSelectedCandidate"]:
-				self.bindGestures (self.entryGestures)
-				if len(candidate)>2 and unicodedata.category(candidate[2])=='Lo':
-					if config.conf["inputComposition"]["reportReadingStringChanges"]:
-						self.speakCharacter(candidate+str(selectionIndex+1))
-					else:
-						self.speakCharacter(candidate)
+			customCandidate=True
+			customDescription=announceDescription
+			isc=True
+
+			if descriptionNumber>0:
+				if len(candidate)>descriptionNumber and unicodedata.category(candidate[descriptionNumber])=='Lo':
+					customCandidate=True
 				else:
-					candidate=self.getDescribedSymbols(candidate)
-					if config.conf["inputComposition"]["reportReadingStringChanges"]:
-						candidate=candidate+str(selectionIndex+1)
-					self.speakCharacter(candidate,isc=isc)
+					customCandidate=False
+					customDescription=True
+			if customCandidate:
+				self.bindGestures (entryGestures)
+				isc=False
+				self.speakCharacter(candidate)
+			if customDescription:
+				self.bindGestures (entryGestures)
+				candidate=self.getDescribedSymbols(candidate)
+				self.speakCharacter(candidate,isc=isc)
 			pt=ct
 
 	def getDescribedSymbols(self,candidate):
@@ -138,13 +158,12 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 				candidate=' '.join(describedSymbols)
 				return candidate
 
-	def handleInputCompositionStart(self,compositionString,selectionStart,selectionEnd,isReading):
-		pass
+	def handleInputCompositionStart(self,compositionString,selectionStart,selectionEnd,isReading): pass
 
 	def handleInputCompositionEnd(self,result):
 		global pt,lastCandidate
 		pt=self.pmsTime=time.time()
-		if config.conf["inputComposition"]["reportCompositionStringChanges"]:
+		if True:
 			if result:
 				if not lastCandidate:
 					self.speakCharacter(result)
@@ -189,7 +208,6 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 					charInfo.move(textInfos.UNIT_CHARACTER,1)
 					api.setReviewPosition(charInfo)
 
-
 	def clear_ime(self):
 		global lastCandidate
 		lastCandidate=''
@@ -225,16 +243,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 		ct=time.time()
 		if obj.windowClassName == "Windows.UI.Core.CoreWindow" and isinstance(obj, CandidateItem) and ct-self.pmsTime>0.2:
 			self.isms=True
-			if config.conf["inputComposition"]["autoReportAllCandidates"]:
-				self.bindGestures (self.entryGestures)
-				o=obj.parent.firstChild
-				t=''
-				while o.role==15:
-					t+=o.lastChild.name+o.firstChild.name+'； '
-					o=o.next
-				self.speakCharacter(t,isp=False)
-			else:
-				self.handleInputCandidateListUpdate(obj.lastChild.name,int(obj.firstChild.name)-1,'ms')
+			self.handleInputCandidateListUpdate(obj.lastChild.name,int(obj.firstChild.name)-1,'ms')
 		else:
 			nextHandler()
 
@@ -264,10 +273,11 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 			nextHandler()
 
 	def event_typedCharacter(self, obj, nextHandler):
-		if isinstance(obj, UIA) and not self.isms and not self.issg and (obj.role==8 or obj.role==52):
-			self.checkCharacter(obj)
-		else:
-			nextHandler()
+		if not self.isms and not self.issg:
+			if isinstance(obj, UIA)  and (obj.role==8 or obj.role==52):
+				self.checkCharacter(obj)
+			else:
+				nextHandler()
 
 	isms=False
 	issg=False
