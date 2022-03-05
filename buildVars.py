@@ -27,7 +27,7 @@ addon_info = {
 输入习惯上，全方位兼容国内视障用户的听打输入习惯，
 而输入效率方面，除了可感知的响应提升以外，还在屏幕阅读器端创新的实现了以词定字功能。"""),
 	# version
-	"addon_version": "2022.2.24",
+	"addon_version": "2022.3.5",
 	# Author(s)
 	"addon_author": "沉浮",
 	# URL for the add-on documentation support
