@@ -3,20 +3,99 @@
 # This file is covered by the GNU General Public License.
 # See the file COPYING for more details.
 
-import globalPluginHandler,speech,characterProcessing,unicodedata,keyboardHandler,time,config,queueHandler,ui,brailleInput,wx,api,textInfos,eventHandler, gui
-import NVDAHelper
+import globalPluginHandler,speech,characterProcessing,unicodedata,time,config,queueHandler,brailleInput,wx,api,textInfos,eventHandler,gui,NVDAHelper
 from NVDAObjects.UIA import UIA
 from NVDAObjects.behaviors import CandidateItem
 from keyboardHandler import KeyboardInputGesture
-from . import settings
-from gui.settingsDialogs import NVDASettingsDialog
-from gui.settingsDialogs import InputCompositionPanel
-from scriptHandler import script
+
+confspec= {
+  "autoReportAllCandidates": "boolean(default=False)",
+  "candidateCharacterDescription": "integer(default=2)",
+  "reportCandidateBeforeDescription": "integer(default=2)",
+  "selectedLeftOrRight": "integer(default=0)",
+  "reportCompositionStringChanges": "boolean(default=True)"
+}
+config.conf.spec["inputExpressive"] = confspec
 
 pt=0
 lastCandidate=''
 
+autoReportAllCandidates=config.conf["inputExpressive"]["autoReportAllCandidates"]
+candidateCharacterDescription=config.conf["inputExpressive"]["candidateCharacterDescription"]
+reportCandidateBeforeDescription=config.conf["inputExpressive"]["reportCandidateBeforeDescription"]
+selectedLeftOrRight=config.conf["inputExpressive"]["selectedLeftOrRight"]
+reportCompositionStringChanges=config.conf["inputExpressive"]["reportCompositionStringChanges"]
+
+entryGestures = {
+		"kb:upArrow": "pressKey",
+		"kb:downArrow": "pressKey",
+		"kb:nvda+s": "pressKeyUp",
+		"kb:nvda+f": "pressKeyDown",
+}
+
+if selectedLeftOrRight==1:
+	entryGestures["kb:["] = "selectLeft"
+	entryGestures["kb:]"] = "selectRight"
+elif selectedLeftOrRight==2:
+	entryGestures["kb:,"] = "selectLeft"
+	entryGestures["kb:."] = "selectRight"
+elif selectedLeftOrRight==3:
+	entryGestures["kb:pageUp"] = "selectLeft"
+	entryGestures["kb:pageDown"] = "selectRight"
+
+for keyboardKey in range(1, 10):
+		entryGestures[f"kb:{keyboardKey}"] = "pressKey"
+
+autoReportAllCandidates_checkBox = None
+candidateCharacterDescription_comboBox = None
+reportCandidateBeforeDescription_comboBox = None
+selectedLeftOrRight_comboBox = None
+reportCompositionStringChanges_checkBox = None
+
+def makeSettings(self, settingsSizer):
+		global autoReportAllCandidates_checkBox, candidateCharacterDescription_comboBox, reportCandidateBeforeDescription_comboBox, selectedLeftOrRight_comboBox, reportCompositionStringChanges_checkBox
+		settingsSizerHelper = gui.guiHelper.BoxSizerHelper(self, sizer=settingsSizer)
+		autoReportAllCandidates_checkBox = settingsSizerHelper.addItem(wx.CheckBox(self, label = _("自动朗读所有候选项")))
+		autoReportAllCandidates_checkBox.SetValue(config.conf["inputExpressive"]["autoReportAllCandidates"])
+
+		candidateCharacterDescription_comboBox = settingsSizerHelper.addLabeledControl(_('输入法解释方式'), wx.Choice, choices = ['不解释', '单字解释', '双字解释', '三字解释', '四字解释', '全解释'])
+		candidateCharacterDescription_comboBox.SetSelection (config.conf["inputExpressive"]["candidateCharacterDescription"])
+
+		reportCandidateBeforeDescription_comboBox = settingsSizerHelper.addLabeledControl(_('解释前先朗读候选项'), wx.Choice, choices = ['从1个字开始', '从2个字开始', '从3个字开始', '从4个字开始', '从5个字开始', '从6个字开始', '不朗读'])
+		reportCandidateBeforeDescription_comboBox.SetSelection (config.conf["inputExpressive"]["reportCandidateBeforeDescription"])
+
+		selectedLeftOrRight_comboBox = settingsSizerHelper.addLabeledControl(_('以词定字按键'), wx.Choice, choices = ['无', '左 / 右方括号', '逗号 / 句号', '上 / 下翻页'])
+		selectedLeftOrRight_comboBox.SetSelection (config.conf["inputExpressive"]["selectedLeftOrRight"])
+
+		reportCompositionStringChanges_checkBox = settingsSizerHelper.addItem(wx.CheckBox(self, label = _("读出上屏内容")))
+		reportCompositionStringChanges_checkBox.SetValue(config.conf["inputExpressive"]["reportCompositionStringChanges"])
+gui.settingsDialogs.InputCompositionPanel.makeSettings=makeSettings
+
+def onSave(self):
+		global autoReportAllCandidates, candidateCharacterDescription, reportCandidateBeforeDescription, selectedLeftOrRight, reportCompositionStringChanges, entryGestures
+		config.conf["inputExpressive"]["autoReportAllCandidates"]=autoReportAllCandidates=autoReportAllCandidates_checkBox.IsChecked()
+		config.conf["inputExpressive"]["candidateCharacterDescription"]=candidateCharacterDescription=candidateCharacterDescription_comboBox.GetSelection()
+		config.conf["inputExpressive"]["reportCandidateBeforeDescription"]=reportCandidateBeforeDescription=reportCandidateBeforeDescription_comboBox.GetSelection()
+		config.conf["inputExpressive"]["selectedLeftOrRight"]=selectedLeftOrRight=selectedLeftOrRight_comboBox.GetSelection()
+		config.conf["inputExpressive"]["reportCompositionStringChanges"]=reportCompositionStringChanges=reportCompositionStringChanges_checkBox.IsChecked()
+		if selectedLeftOrRight==1:
+			[entryGestures.pop(key, None) for key in ['kb:,', 'kb:.', 'kb:PageUp', 'kb:pageDown']]
+			entryGestures["kb:["] = "selectLeft"
+			entryGestures["kb:]"] = "selectRight"
+		elif selectedLeftOrRight==2:
+			[entryGestures.pop(key, None) for key in ['kb:[', 'kb:]', 'kb:PageUp', 'kb:pageDown']]
+			entryGestures["kb:,"] = "selectLeft"
+			entryGestures["kb:."] = "selectRight"
+		elif selectedLeftOrRight==3:
+			[entryGestures.pop(key, None) for key in ['kb:[', 'kb:]', 'kb:,', 'kb:.']]
+			entryGestures["kb:pageUp"] = "selectLeft"
+			entryGestures["kb:pageDown"] = "selectRight"
+		else:
+			[entryGestures.pop(key, None) for key in ['kb:,', 'kb:.', 'kb:PageUp', 'kb:pageDown', 'kb:[', 'kb:]']]
+gui.settingsDialogs.InputCompositionPanel.onSave=onSave
+
 class GlobalPlugin(globalPluginHandler.GlobalPlugin):
+	scriptCategory = "输入法朗读体验优化"
 
 	def __init__(self):
 		super(GlobalPlugin, self).__init__()
@@ -26,55 +105,12 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 		NVDAHelper.handleInputCandidateListUpdate=self.handleInputCandidateListUpdate
 		NVDAHelper.handleInputCompositionStart=self.handleInputCompositionStart
 		NVDAHelper.handleInputCompositionEnd=self.handleInputCompositionEnd
-		# 判断移除原有的输入法设置面板
-		if InputCompositionPanel in NVDASettingsDialog.categoryClasses:
-			NVDASettingsDialog.categoryClasses.remove(InputCompositionPanel)
-		# 注册设置面板
-		NVDASettingsDialog.categoryClasses.append(settings.expressiveInputCompositionPanel)
 
-	def terminate(self):
-		super().terminate()
-		# 移除设置面板
-		NVDASettingsDialog.categoryClasses.remove(settings.expressiveInputCompositionPanel)
+	def getFormattedCandidateName(self,number,candidate): pass
 
-	# 打开输入设置面板的手势，覆盖掉NVDA原有定义
-	@script(
-	description=_("Shows NVDA's input composition settings"),
-	category=_("Configuration")
-	)
-	def script_activateInputCompositionDialog(self, gesture):
-		gui.mainFrame._popupSettingsDialog (NVDASettingsDialog, settings.expressiveInputCompositionPanel)
+	def getFormattedCandidateDescription(self,candidate): pass
 
-	def getFormattedCandidateName(self,number,candidate):
-		pass
-
-	def getFormattedCandidateDescription(self,candidate):
-		pass
-
-	def reportFocus(self):
-		pass
-
-	entryGestures = {
-		"kb:upArrow": "pressKey",
-		"kb:downArrow": "pressKey",
-		"kb:nvda+s": "pressKeyUp",
-		"kb:nvda+f": "pressKeyDown",
-}
-
-	if config.conf["ime_expressive"]["selectedLeftOrRight"]==1:
-		entryGestures["kb:["] = "selectLeft"
-		entryGestures["kb:]"] = "selectRight"
-	elif config.conf["ime_expressive"]["selectedLeftOrRight"]==2:
-		entryGestures["kb:,"] = "selectLeft"
-		entryGestures["kb:."] = "selectRight"
-	elif config.conf["ime_expressive"]["selectedLeftOrRight"]==3:
-		entryGestures["kb:pageUp"] = "selectLeft"
-		entryGestures["kb:pageDown"] = "selectRight"
-
-# Maps all 9 numeric keyboard keys to the apropriate gesture.
-# It was done this way to avoid code repetition.
-	for keyboardKey in range(1, 10):
-		entryGestures[f'kb:{keyboardKey}'] = 'pressKey'
+	def reportFocus(self): pass
 
 	selectedCandidate=''
 	candidateList=[]
@@ -96,8 +132,9 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 				candidate=candidatesString
 			self.selectedCandidate=candidate
 			self.issg=True
-			if config.conf["ime_expressive"]["autoReportAllCandidates"]:
-				self.bindGestures (self.entryGestures)
+
+			if autoReportAllCandidates:
+				self.bindGestures (entryGestures)
 				t=''
 				if '\n' in candidatesString:
 					l=candidatesString.split('\n')
@@ -110,14 +147,16 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 				else:
 					self.speakCharacter(candidatesString+str(selectionIndex+1))
 					return
-			if len(candidate) > config.conf["ime_expressive"]["reportCandidateBeforeDescription"]+1 and not config.conf["ime_expressive"]["reportCandidateBeforeDescription"]==6:
-				self.bindGestures (self.entryGestures)
+
+			if len(candidate) > reportCandidateBeforeDescription+1 and not reportCandidateBeforeDescription==6:
+				self.bindGestures (entryGestures)
 				self.speakCharacter(candidate)
-			if len(candidate) <= config.conf["ime_expressive"]["candidateCharacterDescription"]+1 or config.conf["ime_expressive"]["candidateCharacterDescription"]>=5:
-				self.bindGestures (self.entryGestures)
+			if len(candidate) <= candidateCharacterDescription+1 or candidateCharacterDescription>=5:
+				self.bindGestures (entryGestures)
 				candidate=self.getDescribedSymbols(candidate)
 				self.speakCharacter(candidate,isc=False)
 			pt=ct
+
 
 	def getDescribedSymbols(self,candidate):
 				describedSymbols=[]
@@ -137,13 +176,12 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 				candidate=' '.join(describedSymbols)
 				return candidate
 
-	def handleInputCompositionStart(self,compositionString,selectionStart,selectionEnd,isReading):
-		pass
+	def handleInputCompositionStart(self,compositionString,selectionStart,selectionEnd,isReading): pass
 
 	def handleInputCompositionEnd(self,result):
 		global pt,lastCandidate
 		pt=self.pmsTime=time.time()
-		if config.conf["ime_expressive"]["reportCompositionStringChanges"]:
+		if reportCompositionStringChanges:
 			if result:
 				if not lastCandidate:
 					self.speakCharacter(result)
@@ -188,7 +226,6 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 					charInfo.move(textInfos.UNIT_CHARACTER,1)
 					api.setReviewPosition(charInfo)
 
-
 	def clear_ime(self):
 		global lastCandidate
 		lastCandidate=''
@@ -224,16 +261,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 		ct=time.time()
 		if obj.windowClassName == "Windows.UI.Core.CoreWindow" and isinstance(obj, CandidateItem) and ct-self.pmsTime>0.2:
 			self.isms=True
-			if config.conf["ime_expressive"]["autoReportAllCandidates"]:
-				self.bindGestures (self.entryGestures)
-				o=obj.parent.firstChild
-				t=''
-				while o.role==15:
-					t+=o.lastChild.name+o.firstChild.name+'； '
-					o=o.next
-				self.speakCharacter(t,isp=False)
-			else:
-				self.handleInputCandidateListUpdate(obj.lastChild.name,int(obj.firstChild.name)-1,'ms')
+			self.handleInputCandidateListUpdate(obj.lastChild.name,int(obj.firstChild.name)-1,'ms')
 		else:
 			nextHandler()
 
@@ -263,10 +291,11 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 			nextHandler()
 
 	def event_typedCharacter(self, obj, nextHandler):
-		if isinstance(obj, UIA) and not self.isms and not self.issg and (obj.role==8 or obj.role==52):
-			self.checkCharacter(obj)
-		else:
-			nextHandler()
+		if not self.isms and not self.issg:
+			if isinstance(obj, UIA)  and (obj.role==8 or obj.role==52):
+				self.checkCharacter(obj)
+			else:
+				nextHandler()
 
 	isms=False
 	issg=False
