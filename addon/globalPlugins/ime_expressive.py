@@ -123,10 +123,10 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 			if inputMethod=='ms':
 				lastCandidate=''
 			else:
-				lastCandidate=candidatesString 
+				lastCandidate=candidatesString
 			if '\n' in candidatesString:
 				self.candidateList=candidatesString.split('\n')
-				candidate=self.candidateList[selectionIndex]
+				candidate=self.candidateList[selectionIndex].replace(" ","")
 			else:
 				if not self.isms: self.candidateList.append(candidatesString)
 				candidate=candidatesString
@@ -147,14 +147,19 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 				else:
 					self.speakCharacter(candidatesString+str(selectionIndex+1))
 					return
-
-			if len(candidate) > reportCandidateBeforeDescription+1 and not reportCandidateBeforeDescription==6:
+			customCandidate=True
+			if len(candidate) > reportCandidateBeforeDescription and unicodedata.category(candidate[reportCandidateBeforeDescription])=='Lo':
+				customCandidate=True
+			else:
+				customCandidate=False
+			if len(candidate) >= reportCandidateBeforeDescription+1 and customCandidate and not reportCandidateBeforeDescription==6:
 				self.bindGestures (entryGestures)
+				isc=False
 				self.speakCharacter(candidate)
-			if len(candidate) <= candidateCharacterDescription+1 or candidateCharacterDescription>=5:
+			if len(candidate) <= candidateCharacterDescription or candidateCharacterDescription>=5:
 				self.bindGestures (entryGestures)
 				candidate=self.getDescribedSymbols(candidate)
-				self.speakCharacter(candidate,isc=False)
+				self.speakCharacter(candidate,isc=isc)
 			pt=ct
 
 
