@@ -2,7 +2,7 @@
 # Copyright (C) 2022 NVDA Chinese Community Contributors
 # This file is covered by the GNU General Public License.
 # See the file COPYING for more details.
-
+from tones import beep
 import globalPluginHandler,speech,characterProcessing,unicodedata,time,config,queueHandler,brailleInput,wx,api,textInfos,eventHandler,gui,NVDAHelper
 from NVDAObjects.UIA import UIA
 from NVDAObjects.behaviors import CandidateItem
@@ -183,9 +183,16 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 
 	def handleInputCompositionStart(self,compositionString,selectionStart,selectionEnd,isReading): pass
 
+	caret_obj=None
 	def handleInputCompositionEnd(self,result):
 		global pt,lastCandidate
 		pt=self.pmsTime=time.time()
+		if self.caret_obj and self.caret_obj.appModule.appName=='qq' and self.caret_obj.role==8: 
+			oldSpeechMode = speech.getState().speechMode
+			speech.setSpeechMode(speech.SpeechMode.off)
+			eventHandler.executeEvent("gainFocus",self.caret_obj)
+			speech.setSpeechMode(oldSpeechMode)
+
 		if reportCompositionStringChanges:
 			if result:
 				if not lastCandidate:
@@ -279,15 +286,10 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 
 	old_text=''
 	old_p= 0
+
 	def event_caret(self, obj, nextHandler):
-		if obj.appModule.appName=='qq' and obj.role==8: 
-			oldSpeechMode = speech.getState().speechMode
-			speech.setSpeechMode(speech.SpeechMode.off)
-			eventHandler.executeEvent("gainFocus",obj)
-			speech.setSpeechMode(oldSpeechMode)
-			self.checkCharacter(obj)
-		else:
-			nextHandler()
+		self.caret_obj=obj
+		nextHandler()
 
 	def event_textChange(self, obj, nextHandler):
 		if isinstance(obj, UIA) and not self.isms and not self.issg and (obj.role==8 or obj.role==52):
