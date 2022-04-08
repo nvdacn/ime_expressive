@@ -3,7 +3,7 @@
 # This file is covered by the GNU General Public License.
 # See the file COPYING for more details.
 
-import appModuleHandler, speech, api
+import appModuleHandler, speech, api, controlTypes
 from keyboardHandler import KeyboardInputGesture
 
 class AppModule(appModuleHandler.AppModule):
@@ -15,9 +15,9 @@ class AppModule(appModuleHandler.AppModule):
 		name=newObject.name if newObject.name else ""
 		role=newObject.role.displayString if newObject.role else ""
 		accDescription = newObject.description if newObject.description else ""
-		if newObject.role in(5, 6): # 5, 6 are equivalents of controlTypes.Role.CHECKBOX, controlTypes.Role.RADIOBUTTON
-			state = "已选中" if 32 in newObject.states else "未选中" # 32 is the equivalent of controlTypes.STATE_CHECKED
-		speech.speakMessage(name +role +state+accDescription)
+		if newObject.role in(controlTypes.Role.CHECKBOX, controlTypes.Role.RADIOBUTTON):
+			state = "已选中" if controlTypes.State.CHECKED in newObject.states else "未选中"
+		speech.speakMessage(name +role +state +accDescription)
 
 
 	__gestures = {

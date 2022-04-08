@@ -3,10 +3,12 @@
 # This file is covered by the GNU General Public License.
 # See the file COPYING for more details.
 from tones import beep
-import globalPluginHandler,speech,characterProcessing,unicodedata,time,config,queueHandler,brailleInput,wx,api,textInfos,eventHandler,gui,NVDAHelper
+import globalPluginHandler,speech,characterProcessing,unicodedata,time,config,queueHandler,brailleInput,wx,api,textInfos,eventHandler,gui,NVDAHelper, controlTypes
 from NVDAObjects.UIA import UIA
 from NVDAObjects.behaviors import CandidateItem
 from keyboardHandler import KeyboardInputGesture
+from versionInfo import version_year
+role = controlTypes.Role if version_year>=2022 else controlTypes.role.Role
 
 confspec= {
   "autoReportAllCandidates": "boolean(default=False)",
@@ -187,7 +189,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 	def handleInputCompositionEnd(self,result):
 		global pt,lastCandidate
 		pt=self.pmsTime=time.time()
-		if self.caret_obj and self.caret_obj.appModule.appName=='qq' and self.caret_obj.role==8: 
+		if self.caret_obj and self.caret_obj.appModule.appName=='qq' and self.caret_obj.role==role.EDITABLETEXT:
 			oldSpeechMode = speech.getState().speechMode
 			speech.setSpeechMode(speech.SpeechMode.off)
 			eventHandler.executeEvent("gainFocus",self.caret_obj)
@@ -264,7 +266,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 
 	pmsTime=0
 	def event_UIA_notification(self, obj, nextHandler):
-		if obj.role==9 and obj.UIAElement.cachedAutomationID=='NewNoteButton':
+		if obj.role==role.BUTTON and obj.UIAElement.cachedAutomationID=='NewNoteButton':
 			pass
 		else:
 			nextHandler()
@@ -279,7 +281,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 
 	msCandidateDict={}
 	def event_nameChange(self,obj,nextHandler):
-		if obj.windowClassName == "Windows.UI.Core.CoreWindow" and isinstance(obj.parent, CandidateItem) and obj.role==7 and self.isms:
+		if obj.windowClassName == "Windows.UI.Core.CoreWindow" and isinstance(obj.parent, CandidateItem) and obj.role==role.STATICTEXT and self.isms:
 			self.msCandidateDict[int(obj.previous.name)]=obj.name
 		else:
 			nextHandler()
@@ -291,23 +293,23 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 		self.caret_obj=obj
 		nextHandler()
 
-	def event_textChange(self, obj, nextHandler):
-		if isinstance(obj, UIA) and not self.isms and not self.issg and (obj.role==8 or obj.role==52):
+	def event_textChange1(self, obj, nextHandler):
+		if isinstance(obj, UIA) and not self.isms and not self.issg and (obj.role==role.EDITABLETEXT or obj.role==role.DOCUMENT):
 			self.checkCharacter(obj)
 		else:
 			nextHandler()
 
-	def event_typedCharacter(self, obj, nextHandler):
+	def event_typedCharacter1(self, obj, nextHandler):
 		if not self.isms and not self.issg:
-			if isinstance(obj, UIA)  and (obj.role==8 or obj.role==52):
+			if isinstance(obj, UIA)  and (obj.role==role.EDITABLETEXT or obj.role==role.DOCUMENT):
 				self.checkCharacter(obj)
 			else:
 				nextHandler()
 
 	isms=False
 	issg=False
-	def event_gainFocus(self, obj, nextHandler):
-		if isinstance(obj, UIA) and (self.isms or self.issg) and (obj.role==8 or obj.role==52):
+	def event_gainFocus1(self, obj, nextHandler):
+		if isinstance(obj, UIA) and (self.isms or self.issg) and (obj.role==role.EDITABLETEXT or obj.role==role.DOCUMENT):
 			self.handleInputCompositionEnd(result='')
 			self.checkCharacter(obj,iss=False)
 		else:
