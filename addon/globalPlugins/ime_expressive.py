@@ -31,6 +31,9 @@ reportCompositionStringChanges=config.conf["inputExpressive"]["reportComposition
 entryGestures = {
 		"kb:upArrow": "pressKey",
 		"kb:downArrow": "pressKey",
+		"kb:leftArrow": "pressKey",
+		"kb:rightArrow": "pressKey",
+		"kb:escape": "pressKey",
 		"kb:nvda+s": "pressKeyUp",
 		"kb:nvda+f": "pressKeyDown",
 }
@@ -120,7 +123,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 	def handleInputCandidateListUpdate(self,candidatesString,selectionIndex,inputMethod):
 		global pt,lastCandidate
 		ct=time.time()
-		if candidatesString and ct-pt>0.05:
+		if candidatesString and ct-pt>0.03:
 			isc=True
 			if inputMethod=='ms':
 				lastCandidate=''
@@ -189,12 +192,14 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 	def handleInputCompositionEnd(self,result):
 		global pt,lastCandidate
 		pt=self.pmsTime=time.time()
-		if self.caret_obj and self.caret_obj.appModule.appName=='qq' and self.caret_obj.role==role.EDITABLETEXT:
-			oldSpeechMode = speech.getState().speechMode
-			speech.setSpeechMode(speech.SpeechMode.off)
-			eventHandler.executeEvent("gainFocus",self.caret_obj)
-			speech.setSpeechMode(oldSpeechMode)
-
+		try:
+			if self.caret_obj and self.caret_obj.appModule.appName=='qq' and self.caret_obj.role==role.EDITABLETEXT:
+				oldSpeechMode = speech.getState().speechMode
+				speech.setSpeechMode(speech.SpeechMode.off)
+				eventHandler.executeEvent("gainFocus",self.caret_obj)
+				speech.setSpeechMode(oldSpeechMode)
+		except:
+			pass
 		if reportCompositionStringChanges:
 			if result:
 				if not lastCandidate:
@@ -208,9 +213,8 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 							ch=self.msCandidateDict[self.selectedIndex]
 						else:
 							ch=self.candidateList[self.selectedIndex-1]
-						for i in range(len(ch)):
-							if ch[-1]=='(' or ch[-1]==')' or ch[-1].islower() or ch[-1].isupper():
-								ch=ch[:-1]
+						while unicodedata.category(ch[-1])!='Lo':
+							ch=ch[:-1]
 						self.speakCharacter(ch)
 						self.clear_ime()
 						return

@@ -27,7 +27,7 @@ addon_info = {
 输入习惯上，全方位兼容国内视障用户的听打输入习惯，
 而输入效率方面，除了可感知的响应提升以外，还在屏幕阅读器端创新的实现了以词定字功能。"""),
 	# version
-	"addon_version": "2022.4.7",
+	"addon_version": "2022.4.16",
 	# Author(s)
 	"addon_author": "沉浮",
 	# URL for the add-on documentation support
@@ -35,7 +35,7 @@ addon_info = {
 	# Documentation file name
 	"addon_docFileName": "readme.html",
 	# Minimum NVDA version supported (e.g. "2018.3.0", minor version is optional)
-	"addon_minimumNVDAVersion": 2021.1,
+	"addon_minimumNVDAVersion": 2021.2,
 	# Last NVDA version supported/tested (e.g. "2018.4.0", ideally more recent than minimum version)
 	"addon_lastTestedNVDAVersion": 2022.1,
 	# Add-on update channel (default is None, denoting stable releases,
