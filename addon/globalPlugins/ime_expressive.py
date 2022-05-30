@@ -2,6 +2,7 @@
 # Copyright (C) 2022 NVDA Chinese Community Contributors
 # This file is covered by the GNU General Public License.
 # See the file COPYING for more details.
+
 import globalPluginHandler,speech,characterProcessing,unicodedata,time,config,queueHandler,brailleInput,wx,api,textInfos,eventHandler,gui,NVDAHelper, controlTypes
 from NVDAObjects.UIA import UIA
 from NVDAObjects.behaviors import CandidateItem
@@ -125,12 +126,18 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 	def reportFocus(self): pass
 
 	selectedCandidate=''
+	previousCandadatesString=''
 	candidateList=[]
 	selectedIndex=0
 	def handleInputCandidateListUpdate(self,candidatesString,selectionIndex,inputMethod):
 		global pt,lastCandidate
-		ct=time.time()
-		if candidatesString and ct-pt>0.03:
+		if candidatesString:
+			ct=time.time()
+			if candidatesString==self.previousCandadatesString and ct-pt<0.06:
+				self.previousCandadatesString=candidatesString
+				pt=ct
+				return
+			self.previousCandadatesString=candidatesString
 			isc=True
 			if inputMethod=='ms':
 				lastCandidate=''
@@ -142,6 +149,8 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 			else:
 				if not self.isms: self.candidateList.append(candidatesString)
 				candidate=candidatesString
+			candidate=candidate.replace('(','')
+			candidate=candidate.replace(')','')
 			self.selectedCandidate=candidate
 			self.issg=True
 
@@ -160,18 +169,30 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 					self.speakCharacter(candidatesString+str(selectionIndex+1))
 					return
 			customCandidate=True
-			if len(candidate) > reportCandidateBeforeDescription and unicodedata.category(candidate[reportCandidateBeforeDescription])=='Lo':
+			try:
+				temp=candidate
+				while temp[-1].islower():
+					temp=temp[:-1]
+				candidateLen=len(temp)
+			except:
+				self.bindGestures (entryGestures)
+				self.speakCharacter(candidate)
+				pt=ct
+				return
+
+			if candidateLen > reportCandidateBeforeDescription: # and unicodedata.category(candidate[reportCandidateBeforeDescription])=='Lo':
 				customCandidate=True
 			else:
 				customCandidate=False
-			if len(candidate) >= reportCandidateBeforeDescription+1 and customCandidate and not reportCandidateBeforeDescription==6:
+			if candidateLen >= reportCandidateBeforeDescription+1 and customCandidate and not reportCandidateBeforeDescription==6:
 				self.bindGestures (entryGestures)
 				isc=False
 				self.speakCharacter(candidate)
-			if len(candidate) <= candidateCharacterDescription or candidateCharacterDescription>=5:
+			if candidateLen <= candidateCharacterDescription or candidateCharacterDescription>=5:
 				self.bindGestures (entryGestures)
 				candidate=self.getDescribedSymbols(candidate)
 				self.speakCharacter(candidate,isc=isc)
+			pt=ct
 
 	def getDescribedSymbols(self,candidate):
 				describedSymbols=[]
@@ -263,8 +284,6 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 	def speakCharacter(self,character,isc=True,isp=True):
 		if isc:
 			queueHandler.queueFunction(queueHandler.eventQueue,speech.cancelSpeech)
-		character=character.replace('(','')
-		character=character.replace(')','')
 		if len(character)==1 and character.isupper():
 			queueHandler.queueFunction(queueHandler.eventQueue,speech.speakTypedCharacters,character)
 		else:
