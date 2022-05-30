@@ -2,7 +2,6 @@
 # Copyright (C) 2022 NVDA Chinese Community Contributors
 # This file is covered by the GNU General Public License.
 # See the file COPYING for more details.
-from tones import beep
 import globalPluginHandler,speech,characterProcessing,unicodedata,time,config,queueHandler,brailleInput,wx,api,textInfos,eventHandler,gui,NVDAHelper, controlTypes
 from NVDAObjects.UIA import UIA
 from NVDAObjects.behaviors import CandidateItem
@@ -173,8 +172,6 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 				self.bindGestures (entryGestures)
 				candidate=self.getDescribedSymbols(candidate)
 				self.speakCharacter(candidate,isc=isc)
-			pt=ct
-
 
 	def getDescribedSymbols(self,candidate):
 				describedSymbols=[]
