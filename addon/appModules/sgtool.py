@@ -3,12 +3,15 @@
 # This file is covered by the GNU General Public License.
 # See the file COPYING for more details.
 
-import appModuleHandler, speech, api, controlTypes
+import appModuleHandler, speech, api, controlTypes, ui
 from keyboardHandler import KeyboardInputGesture
 
 class AppModule(appModuleHandler.AppModule):
 
-	def script_pressKey(self,gesture):
+	def script_pressKey(self, gesture):
+		if int(api.getFocusObject().appModule.productVersion[0:2]) >=12:
+			gesture.send()
+			return
 		gesture.send()
 		newObject=api.getFocusObject()
 		state=""
