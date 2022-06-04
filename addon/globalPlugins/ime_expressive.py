@@ -250,7 +250,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 				if self.selectedCandidate:
 					self.speakCharacter(self.selectedCandidate)
 				else:
-					wx.CallAfter(self.speakPunc)
+					wx.CallLater(100,self.speakPunc)
 		self.clear_ime()
 
 	def speakPunc(self,isl=False):
