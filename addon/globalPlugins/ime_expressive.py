@@ -250,7 +250,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 				if self.selectedCandidate:
 					self.speakCharacter(self.selectedCandidate)
 				else:
-					wx.CallLater(100,self.speakPunc)
+					wx.CallLater(20,self.speakPunc)
 		self.clear_ime()
 
 	def speakPunc(self,isl=False):
@@ -324,17 +324,10 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 		nextHandler()
 
 	def event_textChange(self, obj, nextHandler):
-		if supportUIA and  isinstance(obj, UIA) and not self.isms and not self.issg and (obj.role==role.EDITABLETEXT or obj.role==role.DOCUMENT):
+		if supportUIA and  isinstance(obj, UIA) and obj.appModule.appName!='winword' and not self.isms and not self.issg and (obj.role==role.EDITABLETEXT or obj.role==role.DOCUMENT):
 			self.checkCharacter(obj)
 		else:
 			nextHandler()
-
-	def event_typedCharacter(self, obj, nextHandler):
-		if not self.isms and not self.issg:
-			if supportUIA and isinstance(obj, UIA)  and (obj.role==role.EDITABLETEXT or obj.role==role.DOCUMENT):
-				self.checkCharacter(obj)
-			else:
-				nextHandler()
 
 	isms=False
 	issg=False
