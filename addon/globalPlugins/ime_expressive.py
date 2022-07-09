@@ -16,7 +16,7 @@ confspec= {
   "reportCandidateBeforeDescription": "integer(default=2)",
   "selectedLeftOrRight": "integer(default=0)",
   "reportCompositionStringChanges": "boolean(default=True)",
-  "supportUIA": "boolean(default=True)"
+  "supportUIA": "boolean(default=False)"
 }
 config.conf.spec["inputExpressive"] = confspec
 
@@ -78,7 +78,7 @@ def makeSettings(self, settingsSizer):
 		reportCompositionStringChanges_checkBox = settingsSizerHelper.addItem(wx.CheckBox(self, label = _("读出上屏内容")))
 		reportCompositionStringChanges_checkBox.SetValue(config.conf["inputExpressive"]["reportCompositionStringChanges"])
 
-		supportUIA_checkBox = settingsSizerHelper.addItem(wx.CheckBox(self, label = _("支持UIA")))
+		supportUIA_checkBox = settingsSizerHelper.addItem(wx.CheckBox(self, label = _("支持 UIA（实验性，可能引入未知问题）")))
 		supportUIA_checkBox.SetValue(config.conf["inputExpressive"]["supportUIA"])
 
 gui.settingsDialogs.InputCompositionPanel.makeSettings=makeSettings
@@ -250,7 +250,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 				if self.selectedCandidate:
 					self.speakCharacter(self.selectedCandidate)
 				else:
-					wx.CallLater(20,self.speakPunc)
+					wx.CallLater(40,self.speakPunc)
 		self.clear_ime()
 
 	def speakPunc(self,isl=False):
@@ -283,14 +283,14 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 
 	def speakCharacter(self,character,isc=True,isp=True):
 		if isc:
-			queueHandler.queueFunction(queueHandler.eventQueue,speech.cancelSpeech)
+			speech.cancelSpeech()
 		if len(character)==1 and character.isupper():
-			queueHandler.queueFunction(queueHandler.eventQueue,speech.speakTypedCharacters,character)
+			speech.speakTypedCharacters(character)
 		else:
 			if isp:
-				queueHandler.queueFunction(queueHandler.eventQueue,speech.speakText,character, symbolLevel=characterProcessing.SymbolLevel.ALL)
+				speech.speakText(character, symbolLevel=characterProcessing.SymbolLevel.ALL)
 			else:
-				queueHandler.queueFunction(queueHandler.eventQueue,speech.speakMessage,character)
+				speech.speakMessage(character)
 
 	pmsTime=0
 	def event_UIA_notification(self, obj, nextHandler):
