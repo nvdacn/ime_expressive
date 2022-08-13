@@ -3,7 +3,7 @@
 # This file is covered by the GNU General Public License.
 # See the file COPYING for more details.
 
-import globalPluginHandler,speech,characterProcessing,unicodedata,time,config,queueHandler,brailleInput,wx,api,textInfos,eventHandler,gui,NVDAHelper, controlTypes
+import globalPluginHandler,speech,characterProcessing,unicodedata,time,config,queueHandler,brailleInput,wx,api,textInfos,eventHandler,gui,NVDAHelper, controlTypes,winUser
 from NVDAObjects.UIA import UIA
 from NVDAObjects.behaviors import CandidateItem
 from keyboardHandler import KeyboardInputGesture
@@ -118,6 +118,28 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 		NVDAHelper.handleInputCandidateListUpdate=self.handleInputCandidateListUpdate
 		NVDAHelper.handleInputCompositionStart=self.handleInputCompositionStart
 		NVDAHelper.handleInputCompositionEnd=self.handleInputCompositionEnd
+		NVDAHelper.handleInputConversionModeUpdate=self.handleInputConversionModeUpdate
+
+	inputConversionModeMessages={
+		1:('中文','英文'),
+		8:('全角','半角'),
+		1024:('中文标点','英文标点')
+	}
+
+	def handleInputConversionModeUpdate(self,oldFlags,newFlags,lcid):
+		self.clear_ime()
+		for x in range(32):
+			x=2**x
+			msgs=self.inputConversionModeMessages.get(x)
+			if not msgs: continue
+			newOn=bool(newFlags&x)
+			oldOn=bool(oldFlags&x)
+			if newOn!=oldOn: 
+				if newOn:
+					self.speakCharacter(msgs[0],isc=False)
+				else:
+					self.speakCharacter(msgs[1],isc=False)
+				break
 
 	def getFormattedCandidateName(self,number,candidate): pass
 
@@ -137,6 +159,8 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 				self.previousCandadatesString=candidatesString
 				pt=ct
 				return
+			if NVDAHelper.lastLayoutString != self.lastLayoutString:
+				self.lastLayoutString=NVDAHelper.lastLayoutString
 			self.previousCandadatesString=candidatesString
 			isc=True
 			if inputMethod=='ms':
@@ -360,11 +384,25 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 	def script_pressKeyDown(self,gesture):
 		KeyboardInputGesture.fromName("downarrow").send()
 
+	lastLayoutString=''
 	def script_pressKey(self,gesture):
 		keyCode=gesture.vkCode
 		if keyCode >=49 and keyCode <=57:
 			self.selectedIndex=int(chr(keyCode))
-		gesture.send()
+		elif keyCode==27:
+			self.clear_ime()
+		if NVDAHelper.lastLayoutString != self.lastLayoutString:
+				self.lastLayoutString=NVDAHelper.lastLayoutString
+				self.clear_ime()
+				wx.CallAfter(winUser.keybd_event,keyCode, 0, 1, 0)
+				wx.CallAfter(winUser.keybd_event,keyCode, 0, 3, 0)
+				return
+		if NVDAHelper.lastLanguageID==2052:
+			gesture.send()
+		else:
+			self.clear_ime()
+			wx.CallAfter(winUser.keybd_event,keyCode, 0, 1, 0)
+			wx.CallAfter(winUser.keybd_event,keyCode, 0, 3, 0)
 
 	def script_selectLeft(self,gesture):
 		if self.selectedCandidate and len(self.selectedCandidate)>1:
