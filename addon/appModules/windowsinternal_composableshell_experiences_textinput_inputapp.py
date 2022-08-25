@@ -43,11 +43,13 @@ class AppModule(AppModule):  # type: ignore[no-redef]
 				item.appModule for item in api.getFocusAncestors()
 				if item.appModule == self
 			]
+			# Focus object location can be None sometimes.
+			focusLocation = api.getFocusObject().location
 			# System focus restored.
 			if not len(emojiPanelAncestors):
 				return
 			# NVDA is stuck in a nonexistent edit field.
-			elif not any(api.getFocusObject().location):
+			elif focusLocation is not None and not any(focusLocation):
 				self._emojiPanelClosed(obj)
 				return
 		# In Windows 11, candidate panel houses candidate items, not the prediction window.
@@ -138,10 +140,17 @@ class AppModule(AppModule):  # type: ignore[no-redef]
 		# Build 25115 uses modern keyboard interface to display Suggested Actions
 		# if data such as phone number is copied to the clipboard.
 		# Because keyboard interaction is not possible, just report suggested actions.
-		if firstChild.UIAAutomationId == "TitleIcon":
+		# In build 25145 and later (or possibly earlier builds), Automation Id is empty.
+		# Automation Id has changed yet again in build 25158 (argh).
+		# Suggested Actions was backported to Windows 11 22H2 beta (build 22622).
+		suggestedActionsIds = [
+			"Windows.Shell.InputApp.SmartActionsUX"  # Build 25158 and 22622.436 and later
+		]
+		if firstChild.UIAAutomationId in suggestedActionsIds and winVersion.getWinVer().build >= 22622:
 			import ui
 			suggestedActions = []
-			for suggestedAction in firstChild.parent.children:
+			# Build 25158 changes the UI once again, suggested actions is now a grouping, backported to 22622.
+			for suggestedAction in firstChild.children:
 				if suggestedAction.name:
 					suggestedActions.append(suggestedAction.name)
 			ui.message("; ".join(suggestedActions))
@@ -170,7 +179,7 @@ class AppModule(AppModule):  # type: ignore[no-redef]
 
 	def event_UIA_notification(self, obj, nextHandler, displayString=None, activityId=None, **kwargs):
 		# Announce specific UIA notifications from other apps.
-		# This is more so when Suggestions Actions open in build 25115.
+		# This is more so when Suggestions Actions open in build 25115 and later backported to build 22622.
 		# For now keyboard accessibility is not present.
 		if api.getFocusObject().appModule != self and activityId == "Windows.Shell.InputApp.SmartActions.Popup":
 			import ui
