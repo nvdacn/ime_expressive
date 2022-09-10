@@ -148,25 +148,21 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 	def reportFocus(self): pass
 
 	selectedCandidate=''
-	previousCandadatesString=''
 	candidateList=[]
 	selectedIndex=0
 	def handleInputCandidateListUpdate(self,candidatesString,selectionIndex,inputMethod):
 		global pt,lastCandidate
 		if candidatesString:
 			ct=time.time()
-			if candidatesString==self.previousCandadatesString and ct-pt<0.06:
-				self.previousCandadatesString=candidatesString
-				pt=ct
-				return
+			if candidatesString==lastCandidate and ct-pt<0.06: return
+			pt=ct
+			lastCandidate=candidatesString
 			if NVDAHelper.lastLayoutString != self.lastLayoutString:
 				self.lastLayoutString=NVDAHelper.lastLayoutString
 			self.previousCandadatesString=candidatesString
 			isc=True
 			if inputMethod=='ms':
 				lastCandidate=''
-			else:
-				lastCandidate=candidatesString
 			if '\n' in candidatesString:
 				self.candidateList=candidatesString.split('\n')
 				candidate=self.candidateList[selectionIndex].replace(" ","")
@@ -201,7 +197,6 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 			except:
 				self.bindGestures (entryGestures)
 				self.speakCharacter(candidate)
-				pt=ct
 				return
 
 			if candidateLen > reportCandidateBeforeDescription: # and unicodedata.category(candidate[reportCandidateBeforeDescription])=='Lo':
@@ -216,7 +211,6 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 				self.bindGestures (entryGestures)
 				candidate=self.getDescribedSymbols(candidate)
 				self.speakCharacter(candidate,isc=isc)
-			pt=ct
 
 	def getDescribedSymbols(self,candidate):
 				describedSymbols=[]
@@ -323,9 +317,11 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 		else:
 			nextHandler()
 
+	ismsf=False
 	def event_UIA_elementSelected(self, obj, nextHandler):
 		ct=time.time()
 		if obj.windowClassName == "Windows.UI.Core.CoreWindow" and isinstance(obj, CandidateItem) and ct-self.pmsTime>0.2:
+			self.ismsf=True
 			self.isms=True
 			self.handleInputCandidateListUpdate(obj.lastChild.name,int(obj.firstChild.name)-1,'ms')
 		else:
@@ -359,6 +355,8 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 		if supportUIA and isinstance(obj, UIA) and (self.isms or self.issg) and (obj.role==role.EDITABLETEXT or obj.role==role.DOCUMENT):
 			self.handleInputCompositionEnd(result='')
 			self.checkCharacter(obj,iss=False)
+		elif self.ismsf and isinstance(obj, UIA):
+			self.ismsf=False
 		else:
 			nextHandler()
 
