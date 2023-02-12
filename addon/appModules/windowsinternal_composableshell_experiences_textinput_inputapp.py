@@ -21,8 +21,8 @@ from logHandler import log
 from NVDAObjects.UIA import UIA
 
 
-# NVDA Core doesn't know about Windows 11 22H2 yet.
-# This is more so as parts of the below app module needs to know if this is 22H2 beta (build 22622) or not.
+# NVDA Core prior to 2022.4 doesn't know about Windows 11 22H2.
+# This is a must as parts of the below app module needs to know if this is 22H2 beta (build 22622) or not.
 WIN11_22H2 = winVersion.WinVersion(major=10, minor=0, build=22621, releaseName="Windows 11 22H2")
 
 
@@ -178,16 +178,6 @@ class AppModule(AppModule):  # type: ignore[no-redef]
 		# Focus gets stuck in Modern keyboard when clipboard history closes in Windows 11.
 		if obj.parent.childCount == 0:
 			self._emojiPanelClosed(obj)
-		nextHandler()
-
-	def event_UIA_notification(self, obj, nextHandler, displayString=None, activityId=None, **kwargs):
-		# Announce specific UIA notifications from other apps.
-		# This is more so when Suggestions Actions open in build 25115 and later backported to build 22622.
-		# For now keyboard accessibility is not present.
-		if api.getFocusObject().appModule != self and activityId == "Windows.Shell.InputApp.SmartActions.Popup":
-			import ui
-			ui.message(displayString)
-			return
 		nextHandler()
 
 	def chooseNVDAObjectOverlayClasses(self, obj, clsList):
