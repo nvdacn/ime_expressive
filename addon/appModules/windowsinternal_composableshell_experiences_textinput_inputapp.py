@@ -1,11 +1,12 @@
 # A part of NonVisual Desktop Access (NVDA)
-# Copyright (C) 2017-2022 NV Access Limited, Joseph Lee
+# Copyright (C) 2017-2023 NV Access Limited, Joseph Lee
 # This file is covered by the GNU General Public License.
 # See the file COPYING for more details.
 
 # The add-on version of this module will extend the one that comes with NVDA Core (2018.3 and later).
 # For IME candidate item/UI definition, Flake8 must be told to ignore it.
 
+from typing import List, Callable
 # Yes, this app module is powered by built-in modern keyboard (TextInputHost) app module
 # (formerly WindowsInternal.ComposableShell.Experiences.TextInput.InputApp).
 # #70: NVDA Core pull requests are made using the core app module, not alias modules.
@@ -19,11 +20,17 @@ import controlTypes
 import api
 from logHandler import log
 from NVDAObjects.UIA import UIA
+from NVDAObjects import NVDAObject
 
 
-# NVDA Core prior to 2022.4 doesn't know about Windows 11 22H2.
-# This is a must as parts of the below app module needs to know if this is 22H2 beta (build 22622) or not.
-WIN11_22H2 = winVersion.WinVersion(major=10, minor=0, build=22621, releaseName="Windows 11 22H2")
+# Bulk of the below class comes from NVDA Core.
+class ImeCandidateItem(ImeCandidateItem):  # type: ignore[no-redef]
+
+	def event_UIA_elementSelected(self) -> None:
+		# Focus event is fired when a candidate item receives focus, therefore ignore this event.
+		if winVersion.getWinVer() >= winVersion.WIN11:
+			return
+		super().event_UIA_elementSelected()
 
 
 # Built-in modern keyboard app module powers bulk of the below app module class, so inform Mypy.
@@ -32,17 +39,19 @@ class AppModule(AppModule):  # type: ignore[no-redef]
 	_symbolsGroupSelected: bool = False
 	# In Windows 11, clipboard history is seen as a web document.
 	# Turn off browse mode by default so clipboard history entry menu items can be announced when tabbed to.
+	# Resolved in NVDA 2023.1.
 	disableBrowseModeByDefault = True
 
-	def _emojiPanelClosed(self, obj):
+	def _emojiPanelClosed(self, obj: NVDAObject):
 		# Move NVDA's focus object to what is actually focused on screen.
 		# This is needed in Windows 11 when emoji panel closes.
 		eventHandler.queueEvent("gainFocus", obj.objectWithFocus())
 
-	def event_UIA_elementSelected(self, obj, nextHandler):
+	def event_UIA_elementSelected(self, obj: NVDAObject, nextHandler: Callable[[], None]):
+		automationId = obj.UIAAutomationId
 		# Do not proceed if emoji panel category item is selected when the panel itself is gone.
 		# This is the case when closing emoji panel portion in Windows 11.
-		if obj.UIAAutomationId.startswith("navigation-menu-item"):
+		if automationId.startswith("navigation-menu-item"):
 			emojiPanelAncestors = [
 				item.appModule for item in api.getFocusAncestors()
 				if item.appModule == self
@@ -57,18 +66,14 @@ class AppModule(AppModule):  # type: ignore[no-redef]
 				self._emojiPanelClosed(obj)
 				return
 		# In Windows 11, candidate panel houses candidate items, not the prediction window.
-		if obj.UIAAutomationId == "TEMPLATE_PART_CandidatePanel":
+		if automationId == "TEMPLATE_PART_CandidatePanel":
 			obj = obj.firstChild
-		# Logic for IME candidate items is handled all within its own object
-		# Therefore pass these events straight on.
-		# But not in Windows 11 because it also fires gain focus event.
-		if isinstance(obj, ImeCandidateItem):
-			return nextHandler() if winVersion.getWinVer() < winVersion.WIN11 else None
-		# The following is applicable on Windows 10 and Server 2022.
+		# The following is applicable on Windows 10 (including Server 2022).
 		if winVersion.getWinVer() < winVersion.WIN11:
+			parentAutomationId = obj.parent.UIAAutomationId
 			# If emoji/kaomoji/symbols group item gets selected, just tell NVDA to treat it as the new navigator object
 			# (for presentational purposes) and move on.
-			if obj.parent.UIAAutomationId == "TEMPLATE_PART_Groups_ListView":
+			if parentAutomationId == "TEMPLATE_PART_Groups_ListView":
 				api.setNavigatorObject(obj)
 				if obj.positionInfo["indexInGroup"] != 1:
 					# Symbols group flag must be set if and only if emoji panel is active,
@@ -79,7 +84,7 @@ class AppModule(AppModule):  # type: ignore[no-redef]
 			if (
 				# When changing categories (emoji, kaomoji, symbols),
 				# category items are selected when in fact they have no text labels.
-				obj.parent.UIAAutomationId == "TEMPLATE_PART_Sets_ListView"
+				parentAutomationId == "TEMPLATE_PART_Sets_ListView"
 				# Specifically to suppress skin tone modifiers from being announced after an emoji group was selected.
 				or self._symbolsGroupSelected
 			):
@@ -88,13 +93,14 @@ class AppModule(AppModule):  # type: ignore[no-redef]
 		super().event_UIA_elementSelected(obj, nextHandler)
 
 	# Register modern keyboard interface elements with local event handler group.
-	def _windowOpenEventInternalEventHandlerGroupRegistration(self, firstChild):
+	def _windowOpenEventInternalEventHandlerGroupRegistration(self, firstChild: NVDAObject):
 		# Gather elements to be registered inside a list so they can be registered in one go.
 		localEventHandlerElements = [firstChild]
+		firstChildAutomationId = firstChild.UIAAutomationId
 		# For dictation, add elements manually so name change event can be handled.
 		# Object hierarchy is different in voice typing (Windows 11).
-		if firstChild.UIAAutomationId in ("DictationMicrophoneButton", "FloatyTip"):
-			if firstChild.UIAAutomationId == "DictationMicrophoneButton":
+		if firstChildAutomationId in ("DictationMicrophoneButton", "FloatyTip"):
+			if firstChildAutomationId == "DictationMicrophoneButton":
 				element = firstChild.next
 			else:
 				element = firstChild.firstChild.firstChild
@@ -114,7 +120,7 @@ class AppModule(AppModule):  # type: ignore[no-redef]
 			UIAHandler.handler.removeEventHandlerGroup(element.UIAElement, UIAHandler.handler.localEventHandlerGroup)
 			UIAHandler.handler.addEventHandlerGroup(element.UIAElement, UIAHandler.handler.localEventHandlerGroup)
 
-	def event_UIA_window_windowOpen(self, obj, nextHandler):
+	def event_UIA_window_windowOpen(self, obj: NVDAObject, nextHandler: Callable[[], None]):
 		# Ask NVDA to respond to UIA events coming from modern keyboard interface.
 		# Focus change event will not work, as it'll cause focus to be lost when the panel closes.
 		# This is more so on Windows 10.
@@ -122,75 +128,72 @@ class AppModule(AppModule):  # type: ignore[no-redef]
 		# Sometimes window open event is raised when the input panel closes.
 		if firstChild is None:
 			return
+		firstChildAutomationId = firstChild.UIAAutomationId
 		# Log which modern keyboard header is active.
 		if log.isEnabledFor(log.DEBUG):
 			log.debug(
 				"winapps: Automation Id for currently opened modern keyboard feature "
-				f"is {firstChild.UIAAutomationId}"
+				f"is {firstChildAutomationId}"
 			)
 		# Originally part of this method, split into an internal function to reduce complexity.
 		# However, in Windows 11, combined emoji panel and clipboard history moves system focus to itself.
 		# Therefore there is no need to add UIA elements to local event handler group.
 		try:
-			if firstChild.UIAAutomationId != "Windows.Shell.InputApp.FloatingSuggestionUI":
+			if firstChildAutomationId != "Windows.Shell.InputApp.FloatingSuggestionUI":
 				self._windowOpenEventInternalEventHandlerGroupRegistration(firstChild)
 		except NotImplementedError:
 			pass
 		self._symbolsGroupSelected = False
-		# Build 25115 uses modern keyboard interface to display Suggested Actions
-		# if data such as phone number is copied to the clipboard.
+		# Windows 11 22H2 Moment 1 (October 2022) and later uses modern keyboard interface to display
+		# Suggested Actions such as Skype calls if data such as phone number is copied to the clipboard.
 		# Because keyboard interaction is not possible, just report suggested actions.
-		# In build 25145 and later (or possibly earlier builds), Automation Id is empty.
-		# Automation Id has changed yet again in build 25158 (argh).
-		# Suggested Actions was backported to Windows 11 22H2 beta (build 22622).
-		suggestedActionsIds = [
-			"Windows.Shell.InputApp.SmartActionsUX"  # Build 25158 and 22622.436 and later
-		]
-		# Better to use build 22621 as base build since beta increments it by 1.
-		if firstChild.UIAAutomationId in suggestedActionsIds and winVersion.getWinVer() > WIN11_22H2:
+		if (
+			firstChildAutomationId == "Windows.Shell.InputApp.SmartActionsUX"
+			and winVersion.getWinVer() >= winVersion.WIN11_22H2
+		):
 			import ui
-			suggestedActions = []
-			# Build 25158 changes the UI once again, suggested actions is now a grouping, backported to 22622.
-			for suggestedAction in firstChild.children:
-				if suggestedAction.name:
-					suggestedActions.append(suggestedAction.name)
+			suggestedActions = [
+				suggestedAction.name for suggestedAction in firstChild.children if suggestedAction.name
+			]
 			ui.message("; ".join(suggestedActions))
 		# NVDA Core takes care of the rest.
 		super().event_UIA_window_windowOpen(obj, nextHandler)
 
-	# Only on Windows 10 and Server 2022.
-	if winVersion.getWinVer() < winVersion.WIN11:
-		def event_nameChange(self, obj, nextHandler):
+	def event_nameChange(self, obj: NVDAObject, nextHandler: Callable[[], None]):
+		# Only on Windows 10 (including Server 2022).
+		if winVersion.getWinVer() < winVersion.WIN11:
+			automationId, className = obj.UIAAutomationId, obj.UIAElement.cachedClassName
 			if (
 				# Forget it if there is no Automation Id and class name set.
-				(obj.UIAElement.cachedClassName == "" and obj.UIAAutomationId == "")
+				(className == "" and automationId == "")
 				# Clipboard entries fire name change event when opened.
-				or (obj.UIAElement.cachedClassName == "TextBlock" and obj.UIAAutomationId == "")
+				or (className == "TextBlock" and automationId == "")
 				# Ignore useless clipboard entry scrolling announcements.
-				or obj.UIAAutomationId == "VerticalScrollBar"
+				or automationId == "VerticalScrollBar"
 			):
 				return
 			self._symbolsGroupSelected = False
-			# NVDA Core takes care of the rest.
-			super().event_nameChange(obj, nextHandler)
+		# NVDA Core takes care of the rest.
+		super().event_nameChange(obj, nextHandler)
 
-	def event_gainFocus(self, obj, nextHandler):
+	def event_gainFocus(self, obj: NVDAObject, nextHandler: Callable[[], None]):
 		# Focus gets stuck in Modern keyboard when clipboard history closes in Windows 11.
 		if obj.parent.childCount == 0:
 			self._emojiPanelClosed(obj)
 		nextHandler()
 
-	def chooseNVDAObjectOverlayClasses(self, obj, clsList):
+	def chooseNVDAObjectOverlayClasses(self, obj: NVDAObject, clsList: List[NVDAObject]) -> None:
 		# Recognize more candidate UI and item elements in Windows 11.
 		# Return after checking each item so candidate UI and items from Windows 10 can be recognized.
 		if isinstance(obj, UIA):
+			role = obj.role
 			# Candidate item.
-			if obj.role == controlTypes.Role.LISTITEM and obj.parent.UIAAutomationId == "TEMPLATE_PART_CandidatePanel":
+			if role == controlTypes.Role.LISTITEM and obj.parent.UIAAutomationId == "TEMPLATE_PART_CandidatePanel":
 				clsList.insert(0, ImeCandidateItem)
 				return
 			# Candidate UI.
 			elif (
-				obj.role in (controlTypes.Role.LIST, controlTypes.Role.POPUPMENU)
+				role in (controlTypes.Role.LIST, controlTypes.Role.POPUPMENU)
 				and obj.UIAAutomationId in ("TEMPLATE_PART_CandidatePanel", "IME_Prediction_Window")
 			):
 				clsList.insert(0, ImeCandidateUI)

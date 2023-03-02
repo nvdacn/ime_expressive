@@ -9,9 +9,14 @@ from keyboardHandler import KeyboardInputGesture
 class AppModule(appModuleHandler.AppModule):
 
 	def script_pressKey(self, gesture):
-		if int(api.getFocusObject().appModule.productVersion.split('.')[0]) >=12:
+		try:
+			if int(api.getFocusObject().appModule.productVersion.split('.')[0]) > 12:
+				gesture.send()
+				return
+		except:
 			gesture.send()
 			return
+
 		gesture.send()
 		newObject=api.getFocusObject()
 		state=""
