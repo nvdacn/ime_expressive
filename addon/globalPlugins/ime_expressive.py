@@ -16,7 +16,6 @@ confspec= {
   "reportCandidateBeforeDescription": "integer(default=2)",
   "selectedLeftOrRight": "integer(default=0)",
   "reportCompositionStringChanges": "boolean(default=True)",
-  "supportUIA": "boolean(default=False)"
 }
 config.conf.spec["inputExpressive"] = confspec
 
@@ -28,7 +27,6 @@ candidateCharacterDescription=config.conf["inputExpressive"]["candidateCharacter
 reportCandidateBeforeDescription=config.conf["inputExpressive"]["reportCandidateBeforeDescription"]
 selectedLeftOrRight=config.conf["inputExpressive"]["selectedLeftOrRight"]
 reportCompositionStringChanges=config.conf["inputExpressive"]["reportCompositionStringChanges"]
-supportUIA=config.conf["inputExpressive"]["supportUIA"]
 
 entryGestures = {
 		"kb:upArrow": "pressKey",
@@ -58,10 +56,9 @@ candidateCharacterDescription_comboBox = None
 reportCandidateBeforeDescription_comboBox = None
 selectedLeftOrRight_comboBox = None
 reportCompositionStringChanges_checkBox = None
-supportUIA_checkBox = None
 
 def makeSettings(self, settingsSizer):
-		global autoReportAllCandidates_checkBox, candidateCharacterDescription_comboBox, reportCandidateBeforeDescription_comboBox, selectedLeftOrRight_comboBox, reportCompositionStringChanges_checkBox,supportUIA_checkBox
+		global autoReportAllCandidates_checkBox, candidateCharacterDescription_comboBox, reportCandidateBeforeDescription_comboBox, selectedLeftOrRight_comboBox, reportCompositionStringChanges_checkBox
 		settingsSizerHelper = gui.guiHelper.BoxSizerHelper(self, sizer=settingsSizer)
 		autoReportAllCandidates_checkBox = settingsSizerHelper.addItem(wx.CheckBox(self, label = _("自动朗读所有候选项")))
 		autoReportAllCandidates_checkBox.SetValue(config.conf["inputExpressive"]["autoReportAllCandidates"])
@@ -78,19 +75,15 @@ def makeSettings(self, settingsSizer):
 		reportCompositionStringChanges_checkBox = settingsSizerHelper.addItem(wx.CheckBox(self, label = _("读出上屏内容")))
 		reportCompositionStringChanges_checkBox.SetValue(config.conf["inputExpressive"]["reportCompositionStringChanges"])
 
-		supportUIA_checkBox = settingsSizerHelper.addItem(wx.CheckBox(self, label = _("支持 UIA（实验性，可能引入未知问题）")))
-		supportUIA_checkBox.SetValue(config.conf["inputExpressive"]["supportUIA"])
-
 gui.settingsDialogs.InputCompositionPanel.makeSettings=makeSettings
 
 def onSave(self):
-		global autoReportAllCandidates, candidateCharacterDescription, reportCandidateBeforeDescription, selectedLeftOrRight, reportCompositionStringChanges, entryGestures,supportUIA
+		global autoReportAllCandidates, candidateCharacterDescription, reportCandidateBeforeDescription, selectedLeftOrRight, reportCompositionStringChanges, entryGestures
 		config.conf["inputExpressive"]["autoReportAllCandidates"]=autoReportAllCandidates=autoReportAllCandidates_checkBox.IsChecked()
 		config.conf["inputExpressive"]["candidateCharacterDescription"]=candidateCharacterDescription=candidateCharacterDescription_comboBox.GetSelection()
 		config.conf["inputExpressive"]["reportCandidateBeforeDescription"]=reportCandidateBeforeDescription=reportCandidateBeforeDescription_comboBox.GetSelection()
 		config.conf["inputExpressive"]["selectedLeftOrRight"]=selectedLeftOrRight=selectedLeftOrRight_comboBox.GetSelection()
 		config.conf["inputExpressive"]["reportCompositionStringChanges"]=reportCompositionStringChanges=reportCompositionStringChanges_checkBox.IsChecked()
-		config.conf["inputExpressive"]["supportUIA"]=supportUIA=supportUIA_checkBox.IsChecked()
 		if selectedLeftOrRight==1:
 			[entryGestures.pop(key, None) for key in ['kb:,', 'kb:.', 'kb:PageUp', 'kb:pageDown']]
 			entryGestures["kb:["] = "selectLeft"
@@ -154,7 +147,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 		global pt,lastCandidate
 		if candidatesString:
 			ct=time.time()
-			if candidatesString==lastCandidate and ct-pt<0.06: return
+			if candidatesString==lastCandidate and ct-pt<0.05: return
 			pt=ct
 			lastCandidate=candidatesString
 			if NVDAHelper.lastLayoutString != self.lastLayoutString:
@@ -236,14 +229,6 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 	def handleInputCompositionEnd(self,result):
 		global pt,lastCandidate
 		pt=self.pmsTime=time.time()
-		try:
-			if self.caret_obj and self.caret_obj.appModule.appName=='qq' and self.caret_obj.role==role.EDITABLETEXT:
-				oldSpeechMode = speech.getState().speechMode
-				speech.setSpeechMode(speech.SpeechMode.off)
-				eventHandler.executeEvent("gainFocus",self.caret_obj)
-				speech.setSpeechMode(oldSpeechMode)
-		except:
-			pass
 		if reportCompositionStringChanges:
 			if result:
 				if not lastCandidate:
@@ -339,42 +324,15 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 
 	def event_caret(self, obj, nextHandler):
 		self.caret_obj=obj
-		if supportUIA and obj.appModule.appName=='qq' and obj.role==role.EDITABLETEXT:
-			self.checkCharacter(obj)
 		nextHandler()
-
-	def event_textChange(self, obj, nextHandler):
-		if supportUIA and  isinstance(obj, UIA) and obj.appModule.appName!='winword' and not self.isms and not self.issg and (obj.role==role.EDITABLETEXT or obj.role==role.DOCUMENT):
-			self.checkCharacter(obj)
-		else:
-			nextHandler()
 
 	isms=False
 	issg=False
 	def event_gainFocus(self, obj, nextHandler):
-		if supportUIA and isinstance(obj, UIA) and (self.isms or self.issg) and (obj.role==role.EDITABLETEXT or obj.role==role.DOCUMENT):
-			self.handleInputCompositionEnd(result='')
-			self.checkCharacter(obj,iss=False)
-		elif self.ismsf and isinstance(obj, UIA):
+		if self.ismsf and isinstance(obj, UIA):
 			self.ismsf=False
 		else:
 			nextHandler()
-
-	def checkCharacter(self,obj,iss=True):
-		start=obj.makeTextInfo(textInfos.POSITION_ALL)
-		text=start.text
-		end = obj.makeTextInfo(textInfos.POSITION_CARET)
-		start.setEndPoint(end, "endToStart")
-		p= len(start.text)
-		if iss:
-			if len(self.old_text) < len(text):
-				tt=text[self.old_p:p]
-				if tt==' ':
-					self.speakCharacter('空格')
-				elif not speech.isBlank(tt):
-					self.speakCharacter(tt)
-		self.old_text=text
-		self.old_p= p
 
 	def script_pressKeyUp(self,gesture):
 		KeyboardInputGesture.fromName("uparrow").send()
