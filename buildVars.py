@@ -20,16 +20,15 @@ addon_info = {
 	# Add-on summary, usually the user visible name of the addon.
 	# Translators: Summary for this add-on
 	# to be shown on installation and add-on information found in Add-ons Manager.
-	"addon_summary": _("中文输入法支持"),
+	"addon_summary": _("Chinese input method support for NVDA"),
 	# Add-on description
 	# Translators: Long description to be shown for this add-on on add-on information from add-ons manager
-	"addon_description": _("""该插件从中文输入习惯和输入效率两方面，对 NVDA 屏幕阅读器的中文输入体验进行了改进。
-输入习惯上，全方位兼容汉语视障用户的听打输入习惯，
-输入效率方面，除了可感知的响应提升以外，还在屏幕阅读器端创新的实现了以词定字功能。"""),
+	"addon_description": _("""This add-on provides Chinese input method support for the NVDA screen reader.
+It enhances the Chinese input experience in terms of input habits and efficiency for NVDA users."""),
 	# version
-	"addon_version": "2023.9.19",
+	"addon_version": "2024.3.21",
 	# Author(s)
-	"addon_author": "沉浮 <394434124@qq.com>",
+	"addon_author": "Chenfu <394434124@qq.com> Cary-rowen <manchen_0528@outlook.com>",
 	# URL for the add-on documentation support
 	"addon_url": "https://www.nvdacn.com",
 	# URL for the add-on repository where the source code can be found
@@ -37,9 +36,9 @@ addon_info = {
 	# Documentation file name
 	"addon_docFileName": "readme.html",
 	# Minimum NVDA version supported (e.g. "2018.3.0", minor version is optional)
-	"addon_minimumNVDAVersion": 2021.2,
+	"addon_minimumNVDAVersion": "2022.1.0",
 	# Last NVDA version supported/tested (e.g. "2018.4.0", ideally more recent than minimum version)
-	"addon_lastTestedNVDAVersion": 2023.1,
+	"addon_lastTestedNVDAVersion": "2024.1.0",
 	# Add-on update channel (default is None, denoting stable releases,
 	# and for development releases, use "dev".)
 	# Do not change unless you know what you are doing!
@@ -58,7 +57,7 @@ addon_info = {
 # pythonSources = ["addon/globalPlugins/*.py"]
 # For more information on SCons Glob expressions please take a look at:
 # https://scons.org/doc/production/HTML/scons-user/apd.html
-pythonSources = ["addon/globalPlugins/*.py", "addon/appModules/*.py"]
+pythonSources = []
 
 # Files that contain strings for translation. Usually your python sources
 i18nSources = pythonSources + ["buildVars.py"]
@@ -70,7 +69,7 @@ excludedFiles = []
 # Base language for the NVDA add-on
 # If your add-on is written in a language other than english, modify this variable.
 # For example, set baseLanguage to "es" if your add-on is primarily written in spanish.
-baseLanguage = "zh_CN"
+baseLanguage = "en"
 
 # Markdown extensions for add-on documentation
 # Most add-ons do not require additional Markdown extensions.
