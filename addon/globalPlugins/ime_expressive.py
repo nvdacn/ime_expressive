@@ -4,7 +4,9 @@
 # This file is covered by the GNU General Public License.
 # See the file COPYING for more details.
 
-import globalPluginHandler,speech,characterProcessing,unicodedata,time,config,queueHandler,brailleInput,wx,api,textInfos,eventHandler,gui,NVDAHelper, controlTypes,winUser
+import globalPluginHandler,speech,characterProcessing,unicodedata,time,config,queueHandler,brailleInput,wx,api,textInfos,eventHandler,gui,NVDAHelper, controlTypes,winUser,ui
+import winVersion
+from logHandler import log
 from NVDAObjects.UIA import UIA
 from NVDAObjects.behaviors import CandidateItem
 from keyboardHandler import KeyboardInputGesture
@@ -224,7 +226,21 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 				candidate=' '.join(describedSymbols)
 				return candidate
 
-	def handleInputCompositionStart(self,compositionString,selectionStart,selectionEnd,isReading): pass
+	isSkip=False
+	def handleInputCompositionStart(self,compositionString,selectionStart,selectionEnd,isReading):
+		if self.isSkip:
+			self.isSkip=False
+			return
+		try:
+			if self.ms_obj and self.ms_obj.firstChild and self.ms_obj.firstChild.firstChild:
+				obj=self.ms_obj.firstChild.firstChild
+				if obj.windowClassName == "Windows.UI.Core.CoreWindow" and isinstance(obj, CandidateItem):
+					self.ismsf=True
+					self.isms=True
+					self.handleInputCandidateListUpdate(obj.lastChild.name,0,'ms')
+					api.setNavigatorObject(obj)
+		except AttributeError as ae:
+			log.warning(f"AttributeError in handleInputCompositionStart: {ae}")
 
 	caret_obj=None
 	def handleInputCompositionEnd(self,result):
@@ -276,6 +292,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 
 	def clear_ime(self):
 		global lastCandidate
+		api.setNavigatorObject(api.getFocusObject())
 		lastCandidate=''
 		self.selectedCandidate=''
 		self.selectedIndex=0
@@ -304,20 +321,49 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 			nextHandler()
 
 	ismsf=False
+	ms_obj=None
+	def event_UIA_window_windowOpen(self, obj, nextHandler):
+		self.isSkip=True
+		try:
+			if obj.firstChild and obj.firstChild.firstChild:
+				self.ms_obj = obj.firstChild if winVersion.getWinVer().releaseName >= winVersion.WIN11.releaseName else obj
+				obj=self.ms_obj.firstChild.firstChild
+				if obj.windowClassName == "Windows.UI.Core.CoreWindow" and isinstance(obj, CandidateItem):
+					self.ismsf=True
+					self.isms=True
+					self.handleInputCandidateListUpdate(obj.lastChild.name,0,'ms')
+					api.setNavigatorObject(obj)
+		except AttributeError as ae:
+			log.warning(f"AttributeError in event_UIA_window_windowOpen: {ae}")
+		except Exception as e:
+			log.warning(f"Exception in event_UIA_window_windowOpen: {e}")
+		finally:
+			nextHandler()
+
 	def event_UIA_elementSelected(self, obj, nextHandler):
-		ct=time.time()
-		if obj.windowClassName == "Windows.UI.Core.CoreWindow" and isinstance(obj, CandidateItem) and ct-self.pmsTime>0.2:
-			self.ismsf=True
-			self.isms=True
-			self.handleInputCandidateListUpdate(obj.lastChild.name,int(obj.firstChild.name)-1,'ms')
-		else:
+		try:
+			if obj.windowClassName == "Windows.UI.Core.CoreWindow" and isinstance(obj, CandidateItem):
+				self.ismsf=True
+				self.isms=True
+				self.handleInputCandidateListUpdate(obj.lastChild.name,int(obj.firstChild.name)-1,'ms')
+				api.setNavigatorObject(obj)
+		except AttributeError as ae:
+			log.warning(f"AttributeError in event_UIA_elementSelected: {ae}")
+		except Exception as e:
+			log.warning(f"Exception in event_UIA_elementSelected: {e}")
+		finally:
 			nextHandler()
 
 	msCandidateDict={}
 	def event_nameChange(self,obj,nextHandler):
-		if obj.windowClassName == "Windows.UI.Core.CoreWindow" and isinstance(obj.parent, CandidateItem) and obj.role==role.STATICTEXT and self.isms:
-			self.msCandidateDict[int(obj.previous.name)]=obj.name
-		else:
+		try:
+			if obj.windowClassName == "Windows.UI.Core.CoreWindow" and isinstance(obj.parent, CandidateItem) and obj.role==role.STATICTEXT and self.isms:
+				self.msCandidateDict[int(obj.previous.name)]=obj.name
+		except AttributeError as ae:
+			log.warning(f"AttributeError in event_nameChange: {ae}")
+		except Exception as e:
+			log.warning(f"Exception in event_nameChange: {e}")
+		finally:
 			nextHandler()
 
 	old_text=''
