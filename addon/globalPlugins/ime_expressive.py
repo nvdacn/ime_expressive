@@ -238,7 +238,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 					self.ismsf=True
 					self.isms=True
 					self.handleInputCandidateListUpdate(obj.lastChild.name,0,'ms')
-					api.setNavigatorObject(obj)
+					self.setNavigatorObject(obj)
 		except AttributeError as ae:
 			log.warning(f"AttributeError in handleInputCompositionStart: {ae}")
 
@@ -292,7 +292,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 
 	def clear_ime(self):
 		global lastCandidate
-		api.setNavigatorObject(api.getFocusObject())
+		self.setNavigatorObject(api.getFocusObject())
 		lastCandidate=''
 		self.selectedCandidate=''
 		self.selectedIndex=0
@@ -332,7 +332,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 					self.ismsf=True
 					self.isms=True
 					self.handleInputCandidateListUpdate(obj.lastChild.name,0,'ms')
-					api.setNavigatorObject(obj)
+					self.setNavigatorObject(obj)
 		except AttributeError as ae:
 			log.warning(f"AttributeError in event_UIA_window_windowOpen: {ae}")
 		except Exception as e:
@@ -346,7 +346,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 				self.ismsf=True
 				self.isms=True
 				self.handleInputCandidateListUpdate(obj.lastChild.name,int(obj.firstChild.name)-1,'ms')
-				api.setNavigatorObject(obj)
+				self.setNavigatorObject(obj)
 		except AttributeError as ae:
 			log.warning(f"AttributeError in event_UIA_elementSelected: {ae}")
 		except Exception as e:
@@ -426,3 +426,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 					wx.CallAfter(brailleInput.BrailleInputHandler.sendChars,self,ch)
 					break
 			self.clearGestureBindings ()
+
+	def setNavigatorObject(self, obj):
+		if config.conf["reviewCursor"]["followFocus"]:
+			api.setNavigatorObject(obj)
