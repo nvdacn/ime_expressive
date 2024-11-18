@@ -292,7 +292,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 
 	def clear_ime(self):
 		global lastCandidate
-		if api.getNavigatorObject().windowText=='Microsoft Text Input Application' and (not api.getNavigatorObject().isFocusable): self.setNavigatorObject(api.getFocusObject())
+		if api.getNavigatorObject() and api.getNavigatorObject().windowText=='Microsoft Text Input Application' and (not api.getNavigatorObject().isFocusable): self.setNavigatorObject(api.getFocusObject())
 		lastCandidate=''
 		self.selectedCandidate=''
 		self.selectedIndex=0
