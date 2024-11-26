@@ -318,7 +318,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 				speech.speakMessage(character)
 
 	pmsTime=0
-	def event_UIA_notification(self, obj, nextHandler):
+	def event_UIA_notification(self, obj, nextHandler, *args, **kwargs):
 		if obj.role==role.BUTTON and obj.UIAElement.cachedAutomationID=='NewNoteButton':
 			pass
 		else:
