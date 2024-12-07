@@ -147,6 +147,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 	candidateList=[]
 	selectedIndex=0
 	def handleInputCandidateListUpdate(self,candidatesString,selectionIndex,inputMethod):
+		if inputMethod == 'ms' and self.inputEnd: return
 		global pt,lastCandidate
 		if candidatesString:
 			ct=time.time()
@@ -228,6 +229,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 
 	isSkip=False
 	def handleInputCompositionStart(self,compositionString,selectionStart,selectionEnd,isReading):
+		self.inputEnd = False
 		if self.isSkip:
 			self.isSkip=False
 			return
@@ -290,7 +292,9 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 					charInfo.move(textInfos.UNIT_CHARACTER,1)
 					api.setReviewPosition(charInfo)
 
+	inputEnd = True
 	def clear_ime(self):
+		self.inputEnd = True
 		global lastCandidate
 		if api.getNavigatorObject() and api.getNavigatorObject().windowText=='Microsoft Text Input Application' and (not api.getNavigatorObject().isFocusable): self.setNavigatorObject(api.getFocusObject())
 		lastCandidate=''
@@ -314,7 +318,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 				speech.speakMessage(character)
 
 	pmsTime=0
-	def event_UIA_notification(self, obj, nextHandler):
+	def event_UIA_notification(self, obj, nextHandler, *args, **kwargs):
 		if obj.role==role.BUTTON and obj.UIAElement.cachedAutomationID=='NewNoteButton':
 			pass
 		else:
