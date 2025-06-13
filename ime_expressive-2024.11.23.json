@@ -1,0 +1,29 @@
+{
+	"addonId": "ime_expressive",
+	"displayName": "Chinese input method support for NVDA",
+	"URL": "",
+	"description": "This add-on provides Chinese input method support for the NVDA screen reader.\nIt enhances the Chinese input experience in terms of input habits and efficiency for NVDA users.",
+	"sha256": "76a150c4eec2ef1891303f5f57059d3b4d2fa93a8de11640fa58583bcb0315c5",
+	"homepage": "https://www.nvdacn.com",
+	"addonVersionName": "2024.11.23",
+	"addonVersionNumber": {
+		"major": 2024,
+		"minor": 11,
+		"patch": 23
+	},
+	"minNVDAVersion": {
+		"major": 2022,
+		"minor": 1,
+		"patch": 0
+	},
+	"lastTestedVersion": {
+		"major": 2024,
+		"minor": 1,
+		"patch": 0
+	},
+	"channel": "stable",
+	"publisher": "",
+	"sourceURL": "https://github.com/nvdacn/ime_expressive",
+	"license": "GPL v2",
+	"licenseURL": "https://www.gnu.org/licenses/gpl-2.0.html"
+}
