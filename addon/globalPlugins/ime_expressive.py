@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 # A part of NonVisual Desktop Access (NVDA)
-# Copyright (C) 2022 NVDA Chinese Community Contributors
+# Copyright (C) 2022-2025 NVDA Chinese Community Contributors
 # This file is covered by the GNU General Public License.
 # See the file COPYING for more details.
 
