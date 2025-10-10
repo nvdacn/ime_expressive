@@ -362,10 +362,10 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 	def event_nameChange(self,obj,nextHandler):
 		try:
 			if (
-				isinstance(obj.parent, CandidateItem)
+				self.isms
+				and isinstance(obj.parent, CandidateItem)
 				and obj.windowClassName == "Windows.UI.Core.CoreWindow"
 				and obj.role == role.STATICTEXT
-				and self.isms
 			):
 				self.msCandidateDict[int(obj.previous.name)]=obj.name
 		except AttributeError as ae:
