@@ -10,7 +10,7 @@ from logHandler import log
 from NVDAObjects.UIA import UIA
 from NVDAObjects.behaviors import CandidateItem
 from keyboardHandler import KeyboardInputGesture
-from versionInfo import version_year
+from buildVersion import version_year
 role = controlTypes.Role if version_year>=2022 else controlTypes.role.Role
 
 confspec= {
@@ -130,7 +130,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 			if not msgs: continue
 			newOn=bool(newFlags&x)
 			oldOn=bool(oldFlags&x)
-			if newOn!=oldOn: 
+			if newOn!=oldOn:
 				if newOn:
 					self.speakCharacter(msgs[0],isc=False)
 				else:
