@@ -236,7 +236,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 		try:
 			if self.ms_obj and self.ms_obj.firstChild and self.ms_obj.firstChild.firstChild:
 				obj=self.ms_obj.firstChild.firstChild
-				if obj.windowClassName == "Windows.UI.Core.CoreWindow" and isinstance(obj, CandidateItem):
+				if isinstance(obj, CandidateItem) and obj.windowClassName == "Windows.UI.Core.CoreWindow":
 					self.ismsf=True
 					self.isms=True
 					self.handleInputCandidateListUpdate(obj.lastChild.name,0,'ms')
@@ -332,7 +332,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 			if obj.firstChild and obj.firstChild.firstChild:
 				self.ms_obj = obj.firstChild if winVersion.getWinVer().releaseName >= winVersion.WIN11.releaseName else obj
 				obj=self.ms_obj.firstChild.firstChild
-				if obj.windowClassName == "Windows.UI.Core.CoreWindow" and isinstance(obj, CandidateItem):
+				if isinstance(obj, CandidateItem) and obj.windowClassName == "Windows.UI.Core.CoreWindow":
 					self.ismsf=True
 					self.isms=True
 					self.handleInputCandidateListUpdate(obj.lastChild.name,0,'ms')
@@ -346,7 +346,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 
 	def event_UIA_elementSelected(self, obj, nextHandler):
 		try:
-			if obj.windowClassName == "Windows.UI.Core.CoreWindow" and isinstance(obj, CandidateItem):
+			if isinstance(obj, CandidateItem) and obj.windowClassName == "Windows.UI.Core.CoreWindow":
 				self.ismsf=True
 				self.isms=True
 				self.handleInputCandidateListUpdate(obj.lastChild.name,int(obj.firstChild.name)-1,'ms')
@@ -361,7 +361,12 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 	msCandidateDict={}
 	def event_nameChange(self,obj,nextHandler):
 		try:
-			if obj.windowClassName == "Windows.UI.Core.CoreWindow" and isinstance(obj.parent, CandidateItem) and obj.role==role.STATICTEXT and self.isms:
+			if (
+				isinstance(obj.parent, CandidateItem)
+				and obj.windowClassName == "Windows.UI.Core.CoreWindow"
+				and obj.role == role.STATICTEXT
+				and self.isms
+			):
 				self.msCandidateDict[int(obj.previous.name)]=obj.name
 		except AttributeError as ae:
 			log.warning(f"AttributeError in event_nameChange: {ae}")
