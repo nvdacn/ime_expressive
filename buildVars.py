@@ -28,7 +28,7 @@ It enhances the Chinese input experience in terms of input habits and efficiency
 	# version
 	"addon_version": "2025.6.13",
 	# Author(s)
-	"addon_author": "Chenfu <394434124@qq.com> Cary-rowen <manchen_0528@outlook.com>",
+	"addon_author": "Chenfu <394434124@qq.com> Cary-rowen <manchen_0528@outlook.com> hwf1324 <1398969445@qq.com>",
 	# URL for the add-on documentation support
 	"addon_url": "https://www.nvdacn.com",
 	# URL for the add-on repository where the source code can be found

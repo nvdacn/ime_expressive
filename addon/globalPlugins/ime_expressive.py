@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 # A part of NonVisual Desktop Access (NVDA)
-# Copyright (C) 2022 NVDA Chinese Community Contributors
+# Copyright (C) 2022-2025 NVDA Chinese Community Contributors
 # This file is covered by the GNU General Public License.
 # See the file COPYING for more details.
 
@@ -10,7 +10,7 @@ from logHandler import log
 from NVDAObjects.UIA import UIA
 from NVDAObjects.behaviors import CandidateItem
 from keyboardHandler import KeyboardInputGesture
-from versionInfo import version_year
+from buildVersion import version_year
 role = controlTypes.Role if version_year>=2022 else controlTypes.role.Role
 
 confspec= {
@@ -130,7 +130,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 			if not msgs: continue
 			newOn=bool(newFlags&x)
 			oldOn=bool(oldFlags&x)
-			if newOn!=oldOn: 
+			if newOn!=oldOn:
 				if newOn:
 					self.speakCharacter(msgs[0],isc=False)
 				else:
@@ -236,7 +236,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 		try:
 			if self.ms_obj and self.ms_obj.firstChild and self.ms_obj.firstChild.firstChild:
 				obj=self.ms_obj.firstChild.firstChild
-				if obj.windowClassName == "Windows.UI.Core.CoreWindow" and isinstance(obj, CandidateItem):
+				if isinstance(obj, CandidateItem) and obj.windowClassName == "Windows.UI.Core.CoreWindow":
 					self.ismsf=True
 					self.isms=True
 					self.handleInputCandidateListUpdate(obj.lastChild.name,0,'ms')
@@ -332,7 +332,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 			if obj.firstChild and obj.firstChild.firstChild:
 				self.ms_obj = obj.firstChild if winVersion.getWinVer().releaseName >= winVersion.WIN11.releaseName else obj
 				obj=self.ms_obj.firstChild.firstChild
-				if obj.windowClassName == "Windows.UI.Core.CoreWindow" and isinstance(obj, CandidateItem):
+				if isinstance(obj, CandidateItem) and obj.windowClassName == "Windows.UI.Core.CoreWindow":
 					self.ismsf=True
 					self.isms=True
 					self.handleInputCandidateListUpdate(obj.lastChild.name,0,'ms')
@@ -346,7 +346,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 
 	def event_UIA_elementSelected(self, obj, nextHandler):
 		try:
-			if obj.windowClassName == "Windows.UI.Core.CoreWindow" and isinstance(obj, CandidateItem):
+			if isinstance(obj, CandidateItem) and obj.windowClassName == "Windows.UI.Core.CoreWindow":
 				self.ismsf=True
 				self.isms=True
 				self.handleInputCandidateListUpdate(obj.lastChild.name,int(obj.firstChild.name)-1,'ms')
@@ -361,7 +361,12 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 	msCandidateDict={}
 	def event_nameChange(self,obj,nextHandler):
 		try:
-			if obj.windowClassName == "Windows.UI.Core.CoreWindow" and isinstance(obj.parent, CandidateItem) and obj.role==role.STATICTEXT and self.isms:
+			if (
+				self.isms
+				and isinstance(obj.parent, CandidateItem)
+				and obj.windowClassName == "Windows.UI.Core.CoreWindow"
+				and obj.role == role.STATICTEXT
+			):
 				self.msCandidateDict[int(obj.previous.name)]=obj.name
 		except AttributeError as ae:
 			log.warning(f"AttributeError in event_nameChange: {ae}")
