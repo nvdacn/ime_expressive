@@ -14,6 +14,7 @@ class DescriptionMode(IntEnum):
 	For example, DOUBLE means candidates with <= 2 chars will be described
 	character-by-character using getCharacterDescription.
 	"""
+
 	NONE = 0
 	SINGLE = 1
 	DOUBLE = 2
@@ -29,6 +30,7 @@ class ReportThreshold(IntEnum):
 	E.g. FROM_2 means candidates with > 2 chars are spoken as-is first,
 	then the description follows.
 	"""
+
 	FROM_1 = 0
 	FROM_2 = 1
 	FROM_3 = 2
@@ -40,6 +42,7 @@ class ReportThreshold(IntEnum):
 
 class SelectKeyMode(IntEnum):
 	"""Key bindings for selecting the first/last character from a candidate phrase."""
+
 	DISABLED = 0
 	BRACKETS = 1
 	COMMA_PERIOD = 2
