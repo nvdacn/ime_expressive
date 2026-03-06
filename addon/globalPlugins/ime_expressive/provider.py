@@ -71,13 +71,11 @@ class ImeStateManager:
 			return True
 		if not candidatesString:
 			return True
-		currentTime = time.time()
-		if (
-			candidatesString == self.lastCandidatesString
-			and currentTime - self.lastCandidateSpeechTime < self.DEBOUNCE_INTERVAL
-		):
-			log.debug("IME_EXP: Skipping duplicate candidate within debounce window")
-			return True
+		if candidatesString == self.lastCandidatesString:
+			currentTime = time.time()
+			if currentTime - self.lastCandidateSpeechTime < self.DEBOUNCE_INTERVAL:
+				log.debug("IME_EXP: Skipping duplicate candidate within debounce window")
+				return True
 		return False
 
 	def processCandidateUpdate(
