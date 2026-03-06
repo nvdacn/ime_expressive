@@ -12,31 +12,33 @@ modern IME (Windows 11 UIA) support, and customizable speech behavior.
 
 from __future__ import annotations
 
-import globalPluginHandler
-import speech
-import characterProcessing
 import unicodedata
-import config
-import queueHandler
-import brailleInput
-import wx
-import api
-import textInfos
-import NVDAHelper
-import controlTypes
-import winUser
-from typing import Callable, Any
-from logHandler import log
-from NVDAObjects.UIA import UIA
-from NVDAObjects.behaviors import CandidateItem
-from keyboardHandler import KeyboardInputGesture
-from buildVersion import version_year
-from NVDAObjects import NVDAObject
+from collections.abc import Callable
+from typing import Any
 
+import api
+import brailleInput
+import characterProcessing
+import config
+import controlTypes
+import globalPluginHandler
+import NVDAHelper
+import queueHandler
+import speech
+import textInfos
+import winUser
+import wx
+from buildVersion import version_year
+from keyboardHandler import KeyboardInputGesture
+from logHandler import log
+from NVDAObjects import NVDAObject
+from NVDAObjects.behaviors import CandidateItem
+from NVDAObjects.UIA import UIA
+
+from . import settings
 from .describer import CandidateDescriber
 from .provider import ImeStateManager
 from .uiaHelper import ModernImeHelper
-from . import settings
 
 role = controlTypes.Role if version_year >= 2022 else controlTypes.role.Role
 
@@ -58,6 +60,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 	"""
 
 	scriptCategory = "IME Expressive"
+
 	def __init__(self):
 		super().__init__()
 		settings.initConfig()
@@ -76,13 +79,13 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 
 	def _installHooks(self) -> None:
 		"""Monkey-patch NVDAHelper and CandidateItem methods."""
-		self._originalHooks['CandidateItem.getFormattedCandidateName'] = CandidateItem.getFormattedCandidateName
-		self._originalHooks['CandidateItem.getFormattedCandidateDescription'] = CandidateItem.getFormattedCandidateDescription
-		self._originalHooks['CandidateItem.reportFocus'] = CandidateItem.reportFocus
-		self._originalHooks['NVDAHelper.handleInputCandidateListUpdate'] = NVDAHelper.handleInputCandidateListUpdate
-		self._originalHooks['NVDAHelper.handleInputCompositionStart'] = NVDAHelper.handleInputCompositionStart
-		self._originalHooks['NVDAHelper.handleInputCompositionEnd'] = NVDAHelper.handleInputCompositionEnd
-		self._originalHooks['NVDAHelper.handleInputConversionModeUpdate'] = NVDAHelper.handleInputConversionModeUpdate
+		self._originalHooks["CandidateItem.getFormattedCandidateName"] = CandidateItem.getFormattedCandidateName
+		self._originalHooks["CandidateItem.getFormattedCandidateDescription"] = CandidateItem.getFormattedCandidateDescription
+		self._originalHooks["CandidateItem.reportFocus"] = CandidateItem.reportFocus
+		self._originalHooks["NVDAHelper.handleInputCandidateListUpdate"] = NVDAHelper.handleInputCandidateListUpdate
+		self._originalHooks["NVDAHelper.handleInputCompositionStart"] = NVDAHelper.handleInputCompositionStart
+		self._originalHooks["NVDAHelper.handleInputCompositionEnd"] = NVDAHelper.handleInputCompositionEnd
+		self._originalHooks["NVDAHelper.handleInputConversionModeUpdate"] = NVDAHelper.handleInputConversionModeUpdate
 		CandidateItem.getFormattedCandidateName = self._noopFormatter
 		CandidateItem.getFormattedCandidateDescription = self._noopDescFormatter
 		CandidateItem.reportFocus = self._noopReportFocus
@@ -92,13 +95,13 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 		NVDAHelper.handleInputConversionModeUpdate = self.handleInputConversionModeUpdate
 
 	def terminate(self) -> None:
-		CandidateItem.getFormattedCandidateName = self._originalHooks.get('CandidateItem.getFormattedCandidateName', CandidateItem.getFormattedCandidateName)
-		CandidateItem.getFormattedCandidateDescription = self._originalHooks.get('CandidateItem.getFormattedCandidateDescription', CandidateItem.getFormattedCandidateDescription)
-		CandidateItem.reportFocus = self._originalHooks.get('CandidateItem.reportFocus', CandidateItem.reportFocus)
-		NVDAHelper.handleInputCandidateListUpdate = self._originalHooks.get('NVDAHelper.handleInputCandidateListUpdate', NVDAHelper.handleInputCandidateListUpdate)
-		NVDAHelper.handleInputCompositionStart = self._originalHooks.get('NVDAHelper.handleInputCompositionStart', NVDAHelper.handleInputCompositionStart)
-		NVDAHelper.handleInputCompositionEnd = self._originalHooks.get('NVDAHelper.handleInputCompositionEnd', NVDAHelper.handleInputCompositionEnd)
-		NVDAHelper.handleInputConversionModeUpdate = self._originalHooks.get('NVDAHelper.handleInputConversionModeUpdate', NVDAHelper.handleInputConversionModeUpdate)
+		CandidateItem.getFormattedCandidateName = self._originalHooks.get("CandidateItem.getFormattedCandidateName", CandidateItem.getFormattedCandidateName)
+		CandidateItem.getFormattedCandidateDescription = self._originalHooks.get("CandidateItem.getFormattedCandidateDescription", CandidateItem.getFormattedCandidateDescription)
+		CandidateItem.reportFocus = self._originalHooks.get("CandidateItem.reportFocus", CandidateItem.reportFocus)
+		NVDAHelper.handleInputCandidateListUpdate = self._originalHooks.get("NVDAHelper.handleInputCandidateListUpdate", NVDAHelper.handleInputCandidateListUpdate)
+		NVDAHelper.handleInputCompositionStart = self._originalHooks.get("NVDAHelper.handleInputCompositionStart", NVDAHelper.handleInputCompositionStart)
+		NVDAHelper.handleInputCompositionEnd = self._originalHooks.get("NVDAHelper.handleInputCompositionEnd", NVDAHelper.handleInputCompositionEnd)
+		NVDAHelper.handleInputConversionModeUpdate = self._originalHooks.get("NVDAHelper.handleInputConversionModeUpdate", NVDAHelper.handleInputConversionModeUpdate)
 		settings.restoreSettingsPanel()
 		super().terminate()
 
@@ -151,7 +154,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 						target, candidateText = result
 						self._uia.isMicrosoftPinyinFromUia = True
 						self._state.isMicrosoftPinyin = True
-						self.handleInputCandidateListUpdate(candidateText, 0, 'ms')
+						self.handleInputCandidateListUpdate(candidateText, 0, "ms")
 						self._setNavigatorObject(target)
 			except Exception:
 				log.debug("IME_EXP: Error processing modern IME window", exc_info=True)
@@ -163,7 +166,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 			if isinstance(obj, CandidateItem) and obj.windowClassName == "Windows.UI.Core.CoreWindow":
 				self._uia.isMicrosoftPinyinFromUia = True
 				self._state.isMicrosoftPinyin = True
-				self.handleInputCandidateListUpdate(obj.lastChild.name, int(obj.firstChild.name) - 1, 'ms')
+				self.handleInputCandidateListUpdate(obj.lastChild.name, int(obj.firstChild.name) - 1, "ms")
 				self._setNavigatorObject(obj)
 		except Exception:
 			pass
@@ -171,7 +174,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 			nextHandler()
 
 	def event_UIA_notification(self, obj: NVDAObject, nextHandler: Callable[[], None], *args: Any, **kwargs: Any) -> None:
-		if obj.role == role.BUTTON and obj.UIAElement.cachedAutomationID == 'NewNoteButton':
+		if obj.role == role.BUTTON and obj.UIAElement.cachedAutomationID == "NewNoteButton":
 			pass
 		else:
 			nextHandler()
@@ -190,11 +193,10 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 		finally:
 			nextHandler()
 
-
 	_inputConversionModeMessages: dict[int, tuple[str, str]] = {
-		1: ('中文', '英文'),
-		8: ('全角', '半角'),
-		1024: ('中文标点', '英文标点'),
+		1: ("中文", "英文"),
+		8: ("全角", "半角"),
+		1024: ("中文标点", "英文标点"),
 	}
 
 	def handleInputConversionModeUpdate(self, oldFlags: int, newFlags: int, lcid: int) -> None:
@@ -227,7 +229,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 		if settings.isAutoReportAllCandidates():
 			self.bindGestures(self._entryGestures)
 			msg = self._describer.formatAllCandidates(candidatesString, selectionIndex)
-			isMulti = '\n' in candidatesString
+			isMulti = "\n" in candidatesString
 			self._speakCharacter(msg, passthrough=not isMulti)
 			return
 		# Normal mode — use describer
@@ -251,7 +253,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 				target, candidateText = result
 				self._uia.isMicrosoftPinyinFromUia = True
 				self._state.isMicrosoftPinyin = True
-				self.handleInputCandidateListUpdate(candidateText, 0, 'ms')
+				self.handleInputCandidateListUpdate(candidateText, 0, "ms")
 				self._setNavigatorObject(target)
 		except Exception:
 			pass
@@ -272,7 +274,6 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 		if self._state.isMicrosoftPinyin:
 			self._shouldMuteReturnTransition = True
 		self._clearIme()
-
 
 	def _speakCharacter(self, character: str, cancelFirst: bool = True, passthrough: bool = True) -> None:
 		"""Speak a character/string with appropriate method.
@@ -299,12 +300,11 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 		charInfo.expand(textInfos.UNIT_CHARACTER)
 		t = charInfo.text
 		if t and len(t) == 1:
-			if unicodedata.category(t)[0] in 'PS':
+			if unicodedata.category(t)[0] in "PS":
 				self._speakCharacter(t)
 		charInfo.collapse()
 		charInfo.move(textInfos.UNIT_CHARACTER, 1)
 		api.setReviewPosition(charInfo)
-
 
 	def _clearIme(self) -> None:
 		"""Reset all IME state, navigator object, and gesture bindings."""
@@ -319,7 +319,6 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 	def _setNavigatorObject(self, obj: NVDAObject) -> None:
 		if config.conf["reviewCursor"]["followFocus"]:
 			api.setNavigatorObject(obj)
-
 
 	def script_pressKey(self, gesture: KeyboardInputGesture) -> None:
 		keyCode = gesture.vkCode
@@ -360,7 +359,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 			chList = list(self._state.selectedCandidate)
 			for c in range(length):
 				ch = chList.pop()
-				if unicodedata.category(ch) == 'Lo':
+				if unicodedata.category(ch) == "Lo":
 					queueHandler.queueFunction(queueHandler.eventQueue, speech.cancelSpeech)
 					wx.CallAfter(brailleInput.handler.sendChars, ch)
 					break

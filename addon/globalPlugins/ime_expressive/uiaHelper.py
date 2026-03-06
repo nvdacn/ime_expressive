@@ -17,21 +17,22 @@ These IDs are sourced from NVDA's built-in appModule:
 
 from __future__ import annotations
 
+import winVersion
 from logHandler import log
 from NVDAObjects import NVDAObject
 from NVDAObjects.behaviors import CandidateItem
-import winVersion
-
 
 # UIAAutomationIds that identify IME candidate-related windows.
 # Checked on the firstChild of a TextInputHost window to distinguish
 # IME candidates from emoji panel, clipboard history, etc.
-_IME_CANDIDATE_AUTOMATION_IDS = frozenset({
-	"IME_Candidate_Window",
-	"IME_Prediction_Window",
-	"TEMPLATE_PART_CandidatePanel",
-	"CandidateWindowControl",
-})
+_IME_CANDIDATE_AUTOMATION_IDS = frozenset(
+	{
+		"IME_Candidate_Window",
+		"IME_Prediction_Window",
+		"TEMPLATE_PART_CandidatePanel",
+		"CandidateWindowControl",
+	}
+)
 
 
 class ModernImeHelper:
@@ -66,16 +67,12 @@ class ModernImeHelper:
 		Falls back to True if firstChild has no UIAAutomationId (conservative).
 		"""
 		try:
-			if (
-				obj is None
-				or obj.appModule is None
-				or obj.appModule.appName.lower() != "textinputhost"
-			):
+			if obj is None or obj.appModule is None or obj.appModule.appName.lower() != "textinputhost":
 				return False
 			firstChild = obj.firstChild
 			if firstChild is None:
 				return False
-			automationId = getattr(firstChild, 'UIAAutomationId', None)
+			automationId = getattr(firstChild, "UIAAutomationId", None)
 			if automationId is None:
 				# No AutomationId available — conservative fallback
 				return True
@@ -111,7 +108,10 @@ class ModernImeHelper:
 		try:
 			if window.firstChild and window.firstChild.firstChild:
 				target = window.firstChild.firstChild
-				if isinstance(target, CandidateItem) and target.windowClassName == "Windows.UI.Core.CoreWindow":
+				if (
+					isinstance(target, CandidateItem)
+					and target.windowClassName == "Windows.UI.Core.CoreWindow"
+				):
 					candidateText = target.lastChild.name if target.lastChild else ""
 					self.isMicrosoftPinyinFromUia = True
 					log.debug(f"IME_EXP: Found UIA candidate target: '{candidateText}'")
