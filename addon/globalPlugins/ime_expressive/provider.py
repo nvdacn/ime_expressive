@@ -15,12 +15,14 @@ from __future__ import annotations
 import time
 import unicodedata
 from dataclasses import dataclass
+
 from logHandler import log
 
 
 @dataclass
 class CandidateUpdate:
 	"""Result of parsing a candidate list update."""
+
 	candidate: str
 	candidateList: list[str]
 	isMultiCandidate: bool
@@ -35,6 +37,7 @@ class CompositionEndAction:
 	- fallbackToPunc: call _speakPunc instead
 	- (both None/False): do nothing
 	"""
+
 	textToSpeak: str | None = None
 	fallbackToPunc: bool = False
 	resolvedFromIndex: bool = False
@@ -52,24 +55,27 @@ class ImeStateManager:
 	def __init__(self):
 		self.isMicrosoftPinyin: bool = False
 		self.isImeSessionFinished: bool = True
-		self.selectedCandidate: str = ''
+		self.selectedCandidate: str = ""
 		self.selectedCandidateIndex: int = 0
 		self.candidateList: list[str] = []
-		self.lastCandidatesString: str = ''
+		self.lastCandidatesString: str = ""
 		self.lastCandidateSpeechTime: float = 0
-		self.lastLayoutString: str = ''
+		self.lastLayoutString: str = ""
 		self.modernImeCandidateMap: dict[int, str] = {}
 		self.lastModernImeEventTime: float = 0
 
 	def shouldSkipUpdate(self, candidatesString: str, inputMethod: str) -> bool:
 		"""Check if this update should be skipped (session finished or duplicate)."""
-		if inputMethod == 'ms' and self.isImeSessionFinished:
+		if inputMethod == "ms" and self.isImeSessionFinished:
 			log.debug("IME_EXP: Skipping update — session finished for modern IME")
 			return True
 		if not candidatesString:
 			return True
 		currentTime = time.time()
-		if candidatesString == self.lastCandidatesString and currentTime - self.lastCandidateSpeechTime < self.DEBOUNCE_INTERVAL:
+		if (
+			candidatesString == self.lastCandidatesString
+			and currentTime - self.lastCandidateSpeechTime < self.DEBOUNCE_INTERVAL
+		):
 			log.debug("IME_EXP: Skipping duplicate candidate within debounce window")
 			return True
 		return False
@@ -89,15 +95,15 @@ class ImeStateManager:
 		self.lastCandidateSpeechTime = time.time()
 		self.lastCandidatesString = candidatesString
 		self.isImeSessionFinished = False
-		isMultiCandidate = '\n' in candidatesString
+		isMultiCandidate = "\n" in candidatesString
 		if isMultiCandidate:
-			self.candidateList = candidatesString.split('\n')
+			self.candidateList = candidatesString.split("\n")
 			candidate = self.candidateList[selectionIndex].replace(" ", "")
 		else:
 			if not self.isMicrosoftPinyin:
 				self.candidateList.append(candidatesString)
 			candidate = candidatesString
-		candidate = candidate.replace('(', '').replace(')', '')
+		candidate = candidate.replace("(", "").replace(")", "")
 		self.selectedCandidate = candidate
 		log.debug(
 			f"IME_EXP: Candidate update processed: '{candidate}', "
@@ -130,17 +136,21 @@ class ImeStateManager:
 					ch = self.modernImeCandidateMap[self.selectedCandidateIndex]
 				else:
 					ch = self.candidateList[self.selectedCandidateIndex - 1]
-				while ch and unicodedata.category(ch[-1]) != 'Lo':
+				while ch and unicodedata.category(ch[-1]) != "Lo":
 					ch = ch[:-1]
 				if not ch:
-					log.debug(f"IME_EXP: Composition end — resolved empty candidate from index {self.selectedCandidateIndex}")
+					log.debug(
+						f"IME_EXP: Composition end — resolved empty candidate from index {self.selectedCandidateIndex}"
+					)
 					return CompositionEndAction()
-				log.debug(f"IME_EXP: Composition end — resolved from index {self.selectedCandidateIndex}: '{ch}'")
+				log.debug(
+					f"IME_EXP: Composition end — resolved from index {self.selectedCandidateIndex}: '{ch}'"
+				)
 				return CompositionEndAction(textToSpeak=ch, resolvedFromIndex=True)
 			except Exception:
 				log.debug("IME_EXP: Failed to resolve candidate by index, falling back")
 				self.selectedCandidateIndex = 0
-				self.selectedCandidate = ''
+				self.selectedCandidate = ""
 		if self.selectedCandidate:
 			log.debug(f"IME_EXP: Composition end — using selected candidate: '{self.selectedCandidate}'")
 			return CompositionEndAction(textToSpeak=self.selectedCandidate)
@@ -151,8 +161,8 @@ class ImeStateManager:
 		"""Reset all IME session state."""
 		log.debug("IME_EXP: Clearing IME session state")
 		self.isImeSessionFinished = True
-		self.lastCandidatesString = ''
-		self.selectedCandidate = ''
+		self.lastCandidatesString = ""
+		self.selectedCandidate = ""
 		self.selectedCandidateIndex = 0
 		self.candidateList = []
 		self.isMicrosoftPinyin = False

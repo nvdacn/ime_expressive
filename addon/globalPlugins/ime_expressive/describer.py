@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import characterProcessing
 from logHandler import log
+
 from .enums import DescriptionMode, ReportThreshold
 
 
@@ -56,12 +57,12 @@ class CandidateDescriber:
 		describedSymbols: list[str] = []
 		for symbol in candidate:
 			try:
-				symbolDescriptions = characterProcessing.getCharacterDescription('zh_CN', symbol) or []
+				symbolDescriptions = characterProcessing.getCharacterDescription("zh_CN", symbol) or []
 			except TypeError:
 				symbolDescriptions = []
 			if len(symbolDescriptions) >= 1:
 				description = symbolDescriptions[0]
-				if description.startswith('(') and description.endswith(')'):
+				if description.startswith("(") and description.endswith(")"):
 					describedSymbols.append(description[1:-1])
 				else:
 					describedSymbols.append(
@@ -73,7 +74,7 @@ class CandidateDescriber:
 					)
 			else:
 				describedSymbols.append(symbol)
-		result = ' '.join(describedSymbols)
+		result = " ".join(describedSymbols)
 		log.debug(f"IME_EXP: describeCharacters('{candidate}') -> '{result}'")
 		return result
 
@@ -94,12 +95,12 @@ class CandidateDescriber:
 		Multi-candidate: "候选1 1；候选2 2；..."
 		Single candidate: "候选文本 N"
 		"""
-		if '\n' in candidatesString:
-			items = candidatesString.split('\n')
+		if "\n" in candidatesString:
+			items = candidatesString.split("\n")
 			parts: list[str] = []
 			for i, item in enumerate(items, start=1):
 				parts.append(f"{item}{i}")
-			return '； '.join(parts) + '； '
+			return "； ".join(parts) + "； "
 		return candidatesString + str(selectionIndex + 1)
 
 	def buildSpeechParts(

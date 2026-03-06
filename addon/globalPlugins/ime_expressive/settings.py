@@ -18,6 +18,7 @@ import config
 import gui
 import wx
 from logHandler import log
+
 from .enums import DescriptionMode, ReportThreshold, SelectKeyMode
 
 addonHandler.initTranslation()
@@ -72,7 +73,7 @@ def _makeSettings(self, settingsSizer: wx.Sizer) -> None:
 				# Translators: The label for a checkbox in input composition settings
 				# to automatically report all candidates when the candidate window appears.
 				"Report all candidates automatically"
-			)
+			),
 		)
 	)
 	self.imeAutoReportCheckBox.SetValue(config.conf[CONF_SECTION]["autoReportAllCandidates"])
@@ -95,7 +96,7 @@ def _makeSettings(self, settingsSizer: wx.Sizer) -> None:
 			# Translators: A choice indicating up to 4 characters will be described.
 			_("Up to 4 characters"),
 			# Translators: A choice indicating all characters will be described.
-			_("All characters")
+			_("All characters"),
 		],
 	)
 	self.imeDescriptionModeChoice.SetSelection(config.conf[CONF_SECTION]["candidateCharacterDescription"])
@@ -120,7 +121,7 @@ def _makeSettings(self, settingsSizer: wx.Sizer) -> None:
 			# Translators: A choice indicating candidate name is reported for 6 chars or more.
 			_("For 6 characters or more"),
 			# Translators: A choice indicating candidate name is never reported before description.
-			_("Never")
+			_("Never"),
 		],
 	)
 	self.imeReportThresholdChoice.SetSelection(config.conf[CONF_SECTION]["reportCandidateBeforeDescription"])
@@ -139,7 +140,7 @@ def _makeSettings(self, settingsSizer: wx.Sizer) -> None:
 			# Translators: A choice indicating comma/period are used as shortcuts.
 			_(", / ."),
 			# Translators: A choice indicating PageUp/PageDown are used as shortcuts.
-			_("PageUp / PageDown")
+			_("PageUp / PageDown"),
 		],
 	)
 	self.imeSelectKeyChoice.SetSelection(config.conf[CONF_SECTION]["selectedLeftOrRight"])
@@ -150,7 +151,7 @@ def _makeSettings(self, settingsSizer: wx.Sizer) -> None:
 				# Translators: The label for a checkbox in input composition settings
 				# to report composition string changes during typing.
 				"Report composition string changes"
-			)
+			),
 		)
 	)
 	self.imeReportCompChangesCheckBox.SetValue(config.conf[CONF_SECTION]["reportCompositionStringChanges"])
