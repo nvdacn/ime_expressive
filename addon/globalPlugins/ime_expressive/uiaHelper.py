@@ -67,7 +67,9 @@ class ModernImeHelper:
 		Falls back to True if firstChild has no UIAAutomationId (conservative).
 		"""
 		try:
-			if obj is None or obj.appModule is None or obj.appModule.appName.lower() != "textinputhost":
+			if obj is None or obj.windowClassName != "Windows.UI.Core.CoreWindow":
+				return False
+			if obj.appModule is None or obj.appModule.appName.lower() != "textinputhost":
 				return False
 			firstChild = obj.firstChild
 			if firstChild is None:
@@ -106,13 +108,15 @@ class ModernImeHelper:
 		if not window:
 			return None
 		try:
-			if window.firstChild and window.firstChild.firstChild:
-				target = window.firstChild.firstChild
+			firstChild = window.firstChild
+			if firstChild:
+				target = firstChild.firstChild
 				if (
 					isinstance(target, CandidateItem)
 					and target.windowClassName == "Windows.UI.Core.CoreWindow"
 				):
-					candidateText = target.lastChild.name if target.lastChild else ""
+					lastChild = target.lastChild
+					candidateText = lastChild.name if lastChild else ""
 					self.isMicrosoftPinyinFromUia = True
 					log.debug(f"IME_EXP: Found UIA candidate target: '{candidateText}'")
 					return target, candidateText

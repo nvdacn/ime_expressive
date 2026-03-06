@@ -147,7 +147,8 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 			self._state.isMicrosoftPinyin = True
 			log.debug("IME_EXP: Modern IME candidate window opened")
 			try:
-				if obj.firstChild and obj.firstChild.firstChild:
+				firstChild = obj.firstChild
+				if firstChild and firstChild.firstChild:
 					self._uia.cacheWindow(obj)
 					result = self._uia.findCandidateTarget()
 					if result:
@@ -163,11 +164,14 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 
 	def event_UIA_elementSelected(self, obj: NVDAObject, nextHandler: Callable[[], None]) -> None:
 		try:
-			if isinstance(obj, CandidateItem) and obj.windowClassName == "Windows.UI.Core.CoreWindow":
-				self._uia.isMicrosoftPinyinFromUia = True
-				self._state.isMicrosoftPinyin = True
-				self.handleInputCandidateListUpdate(obj.lastChild.name, int(obj.firstChild.name) - 1, "ms")
-				self._setNavigatorObject(obj)
+			if obj.windowClassName == "Windows.UI.Core.CoreWindow" and isinstance(obj, CandidateItem):
+				firstChild = obj.firstChild
+				lastChild = obj.lastChild
+				if firstChild and lastChild:
+					self._uia.isMicrosoftPinyinFromUia = True
+					self._state.isMicrosoftPinyin = True
+					self.handleInputCandidateListUpdate(lastChild.name, int(firstChild.name) - 1, "ms")
+					self._setNavigatorObject(obj)
 		except Exception:
 			pass
 		finally:
@@ -183,11 +187,13 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 		try:
 			if (
 				self._state.isMicrosoftPinyin
-				and isinstance(obj.parent, CandidateItem)
-				and obj.windowClassName == "Windows.UI.Core.CoreWindow"
 				and obj.role == role.STATICTEXT
+				and obj.windowClassName == "Windows.UI.Core.CoreWindow"
+				and isinstance(obj.parent, CandidateItem)
 			):
-				self._state.recordCandidateSelection(int(obj.previous.name), obj.name)
+				previous = obj.previous
+				if previous and previous.name:
+					self._state.recordCandidateSelection(int(previous.name), obj.name)
 		except Exception:
 			pass
 		finally:
