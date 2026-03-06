@@ -8,15 +8,136 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 'ime_expressive' '2024.3.21'\n"
 "Report-Msgid-Bugs-To: 'nvda-translations@groups.io'\n"
-"POT-Creation-Date: 2024-03-21 15:22+0800\n"
-"PO-Revision-Date: 2024-03-21 15:25+0800\n"
+"POT-Creation-Date: 2026-03-06 10:47+0800\n"
+"PO-Revision-Date: 2026-03-06 10:49+0800\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 3.4.2\n"
+"X-Generator: Poedit 3.8\n"
+
+#. Translators: Used to describe a character using a word it appears in.
+#. For example: "A as in Apple".
+#: addon\globalPlugins\ime_expressive\describer.py:72
+msgid "{symbol} as in {description}"
+msgstr "{description}的{symbol}"
+
+#. Translators: The label for a checkbox in input composition settings
+#. to automatically report all candidates when the candidate window appears.
+#: addon\globalPlugins\ime_expressive\settings.py:75
+msgid "Report all candidates automatically"
+msgstr "自动朗读所有候选项"
+
+#. Translators: The label for a choice in input composition settings
+#. configuring how many characters of a candidate should be described.
+#: addon\globalPlugins\ime_expressive\settings.py:84
+msgid "Candidate character description pattern"
+msgstr "候选项字符解释模式"
+
+#. Translators: A choice indicating character description is disabled.
+#: addon\globalPlugins\ime_expressive\settings.py:89
+msgid "Off"
+msgstr "关闭"
+
+#. Translators: A choice indicating up to 1 character will be described.
+#: addon\globalPlugins\ime_expressive\settings.py:91
+msgid "Up to 1 character"
+msgstr "单字"
+
+#. Translators: A choice indicating up to 2 characters will be described.
+#: addon\globalPlugins\ime_expressive\settings.py:93
+msgid "Up to 2 characters"
+msgstr "双字"
+
+#. Translators: A choice indicating up to 3 characters will be described.
+#: addon\globalPlugins\ime_expressive\settings.py:95
+msgid "Up to 3 characters"
+msgstr "三字"
+
+#. Translators: A choice indicating up to 4 characters will be described.
+#: addon\globalPlugins\ime_expressive\settings.py:97
+msgid "Up to 4 characters"
+msgstr "四字"
+
+#. Translators: A choice indicating all characters will be described.
+#: addon\globalPlugins\ime_expressive\settings.py:99
+msgid "All characters"
+msgstr "全解释"
+
+#. Translators: The label for a choice in input composition settings
+#. configuring whether the candidate name is reported before character descriptions.
+#: addon\globalPlugins\ime_expressive\settings.py:107
+msgid "Report candidate before description"
+msgstr "字符解释前先朗读候选项"
+
+#. Translators: A choice indicating candidate name is reported for 1 char or more.
+#: addon\globalPlugins\ime_expressive\settings.py:112
+msgid "For 1 character or more"
+msgstr "从 1 个字开始"
+
+#. Translators: A choice indicating candidate name is reported for 2 chars or more.
+#: addon\globalPlugins\ime_expressive\settings.py:114
+msgid "For 2 characters or more"
+msgstr "从 2 个字开始"
+
+#. Translators: A choice indicating candidate name is reported for 3 chars or more.
+#: addon\globalPlugins\ime_expressive\settings.py:116
+msgid "For 3 characters or more"
+msgstr "从 3 个字开始"
+
+#. Translators: A choice indicating candidate name is reported for 4 chars or more.
+#: addon\globalPlugins\ime_expressive\settings.py:118
+msgid "For 4 characters or more"
+msgstr "从 4 个字开始"
+
+#. Translators: A choice indicating candidate name is reported for 5 chars or more.
+#: addon\globalPlugins\ime_expressive\settings.py:120
+msgid "For 5 characters or more"
+msgstr "从 5 个字开始"
+
+#. Translators: A choice indicating candidate name is reported for 6 chars or more.
+#: addon\globalPlugins\ime_expressive\settings.py:122
+msgid "For 6 characters or more"
+msgstr "从 6 个字开始"
+
+#. Translators: A choice indicating candidate name is never reported before description.
+#: addon\globalPlugins\ime_expressive\settings.py:124
+msgid "Never"
+msgstr "从不"
+
+#. Translators: The label for a choice in input composition settings
+#. configuring the shortcut for selecting a candidate character.
+#: addon\globalPlugins\ime_expressive\settings.py:132
+msgid "Select candidate character shortcut"
+msgstr "以词定字快捷键"
+
+#. Translators: A choice indicating no shortcut is assigned.
+#: addon\globalPlugins\ime_expressive\settings.py:137
+msgid "None"
+msgstr "无"
+
+#. Translators: A choice indicating left/right brackets are used as shortcuts.
+#: addon\globalPlugins\ime_expressive\settings.py:139
+msgid "[ / ]"
+msgstr "左/右方括号"
+
+#. Translators: A choice indicating comma/period are used as shortcuts.
+#: addon\globalPlugins\ime_expressive\settings.py:141
+msgid ", / ."
+msgstr "逗号/句号"
+
+#. Translators: A choice indicating PageUp/PageDown are used as shortcuts.
+#: addon\globalPlugins\ime_expressive\settings.py:143
+msgid "PageUp / PageDown"
+msgstr "上/下翻页"
+
+#. Translators: The label for a checkbox in input composition settings
+#. to report composition string changes during typing.
+#: addon\globalPlugins\ime_expressive\settings.py:153
+msgid "Report composition string changes"
+msgstr "读出上屏字符"
 
 #. Add-on summary, usually the user visible name of the addon.
 #. Translators: Summary for this add-on
@@ -36,3 +157,12 @@ msgid ""
 msgstr ""
 "该插件为 NVDA 屏幕阅读器提供中文输入法朗读支持。\n"
 "从输入习惯和效率方面增强了 NVDA 用户的中文输入体验。"
+
+#. Brief changelog for this version
+#. Translators: what's new content for the add-on version to be shown in the add-on store
+#: buildVars.py:32
+msgid "Compatible with NVDA 2026.1."
+msgstr "兼容 NVDA2026.1。"
+
+#~ msgid "兼容 NVDA2026.1Beta"
+#~ msgstr "兼容 NVDA2026.1Beta"
