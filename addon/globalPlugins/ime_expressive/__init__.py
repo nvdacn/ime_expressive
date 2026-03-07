@@ -74,6 +74,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 		self._uia = ModernImeHelper()
 		self._shouldMuteReturnTransition: bool = False
 		self._shouldSkipCompositionStart: bool = False
+		self._currentCompositionString: str = ""
 		self._entryGestures: dict[str, str] = settings.buildGestureMap()
 		self._installHooks()
 
@@ -228,7 +229,9 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 		self._describer.reportThreshold = settings.getReportThreshold()
 		if NVDAHelper.lastLayoutString != self._state.lastLayoutString:
 			self._state.lastLayoutString = NVDAHelper.lastLayoutString
-		update = self._state.processCandidateUpdate(candidatesString, selectionIndex, inputMethod)
+		update = self._state.processCandidateUpdate(
+			candidatesString, selectionIndex, self._currentCompositionString, inputMethod
+		)
 		if update is None:
 			return
 		candidate = update.candidate
@@ -249,6 +252,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 
 	def handleInputCompositionStart(self, compositionString: str, selectionStart: int, selectionEnd: int, isReading: bool) -> None:
 		log.debug(f"IME_EXP: Composition start: '{compositionString}'")
+		self._currentCompositionString = compositionString
 		self._state.startSession()
 		if self._shouldSkipCompositionStart:
 			self._shouldSkipCompositionStart = False
@@ -315,6 +319,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 	def _clearIme(self) -> None:
 		"""Reset all IME state, navigator object, and gesture bindings."""
 		self._state.clear()
+		self._currentCompositionString = ""
 		navObj = api.getNavigatorObject()
 		if navObj and not navObj.isFocusable and self._uia.isModernImeProcess(navObj):
 			self._setNavigatorObject(api.getFocusObject())

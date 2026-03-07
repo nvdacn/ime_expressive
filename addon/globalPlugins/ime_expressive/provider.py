@@ -50,8 +50,6 @@ class ImeStateManager:
 	The controller reads state from here and decides what to speak.
 	"""
 
-	DEBOUNCE_INTERVAL: float = 0.05  # 50ms duplicate suppression
-
 	def __init__(self):
 		self.isMicrosoftPinyin: bool = False
 		self.isImeSessionFinished: bool = True
@@ -59,39 +57,46 @@ class ImeStateManager:
 		self.selectedCandidateIndex: int = 0
 		self.candidateList: list[str] = []
 		self.lastCandidatesString: str = ""
-		self.lastCandidateSpeechTime: float = 0
+		self.lastCompositionString: str = ""
 		self.lastLayoutString: str = ""
 		self.modernImeCandidateMap: dict[int, str] = {}
 		self.lastModernImeEventTime: float = 0
 
-	def shouldSkipUpdate(self, candidatesString: str, inputMethod: str) -> bool:
-		"""Check if this update should be skipped (session finished or duplicate)."""
+	def shouldSkipUpdate(self, candidatesString: str, selectionIndex: int, compositionString: str, inputMethod: str) -> bool:
+		"""Check if this update should be skipped (session finished or exact duplicate)."""
 		if inputMethod == "ms" and self.isImeSessionFinished:
 			log.debug("IME_EXP: Skipping update — session finished for modern IME")
 			return True
 		if not candidatesString:
 			return True
-		if candidatesString == self.lastCandidatesString:
-			currentTime = time.time()
-			if currentTime - self.lastCandidateSpeechTime < self.DEBOUNCE_INTERVAL:
-				log.debug("IME_EXP: Skipping duplicate candidate within debounce window")
-				return True
+		
+		# Absolute Duplicate suppression: Skip ONLY if text, selection index AND composition string
+		# are EXACTLY the same as last reported ones. No time limit needed.
+		if (
+			candidatesString == self.lastCandidatesString
+			and selectionIndex == self.selectedCandidateIndex
+			and compositionString == self.lastCompositionString
+		):
+			log.debug("IME_EXP: Skipping exact duplicate candidate update")
+			return True
 		return False
 
 	def processCandidateUpdate(
 		self,
 		candidatesString: str,
 		selectionIndex: int,
+		compositionString: str,
 		inputMethod: str,
 	) -> CandidateUpdate | None:
 		"""Parse a candidate list update and update internal state.
 
 		:return: CandidateUpdate if the update should be spoken, None if skipped.
 		"""
-		if self.shouldSkipUpdate(candidatesString, inputMethod):
+		if self.shouldSkipUpdate(candidatesString, selectionIndex, compositionString, inputMethod):
 			return None
-		self.lastCandidateSpeechTime = time.time()
 		self.lastCandidatesString = candidatesString
+		self.selectedCandidateIndex = selectionIndex
+		self.lastCompositionString = compositionString
 		self.isImeSessionFinished = False
 		isMultiCandidate = "\n" in candidatesString
 		if isMultiCandidate:
@@ -120,7 +125,6 @@ class ImeStateManager:
 		  if result:    speak result only if it matches lastCandidatesString
 		  else:         try index → selectedCandidate → fallback to punc
 		"""
-		self.lastCandidateSpeechTime = self.lastModernImeEventTime = time.time()
 		if result:
 			if not self.lastCandidatesString or result in self.lastCandidatesString:
 				log.debug(f"IME_EXP: Composition end — result matches candidates: '{result}'")
