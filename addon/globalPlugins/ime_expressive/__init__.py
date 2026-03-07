@@ -238,6 +238,10 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 		)
 		if update is None:
 			return
+		# For IMEs without composition tracking (e.g. Sogou), reset dedup state after
+		# the current event loop cycle so cross-keystroke same-content updates get through.
+		if not self._currentCompositionString:
+			wx.CallAfter(self._resetCandidateDedup)
 		candidate = update.candidate
 		if settings.isAutoReportAllCandidates():
 			self.bindGestures(self._entryGestures)
@@ -330,6 +334,16 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 		self._uia.invalidateCache()
 		self.clearGestureBindings()
 		log.debug("IME_EXP: IME state and gestures cleared")
+
+	def _resetCandidateDedup(self) -> None:
+		"""Reset candidate dedup state between keystroke batches.
+
+		Called via wx.CallAfter for IMEs without composition tracking (e.g. Sogou).
+		Fires after all duplicate RPC callbacks from the same keystroke have been
+		processed, allowing the next keystroke's updates to pass through even if
+		the candidate content is identical.
+		"""
+		self._state.lastCandidatesString = ""
 
 	def _setNavigatorObject(self, obj: NVDAObject) -> None:
 		if config.conf["reviewCursor"]["followFocus"]:

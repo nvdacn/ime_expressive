@@ -69,9 +69,9 @@ class ImeStateManager:
 			return True
 		if not candidatesString:
 			return True
-		
-		# Absolute Duplicate suppression: Skip ONLY if text, selection index AND composition string
-		# are EXACTLY the same as last reported ones. No time limit needed.
+
+		# Exact duplicate suppression: skip ONLY if text, selection index AND composition string
+		# are all the same as last reported ones.
 		if (
 			candidatesString == self.lastCandidatesString
 			and selectionIndex == self.selectedCandidateIndex
