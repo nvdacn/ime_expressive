@@ -352,7 +352,12 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 	def script_pressKey(self, gesture: KeyboardInputGesture) -> None:
 		keyCode = gesture.vkCode
 		if VK_1 <= keyCode <= VK_9:
-			self._state.selectedCandidateIndex = int(chr(keyCode))
+			idx = int(chr(keyCode))
+			self._state.selectedCandidateIndex = idx
+			if self._state.candidateList and 0 < idx <= len(self._state.candidateList):
+				raw = self._state.candidateList[idx - 1].replace(" ", "").replace("(", "").replace(")", "")
+				if raw:
+					self._state.selectedCandidate = raw
 		elif keyCode == VK_ESCAPE:
 			self._clearIme()
 		if NVDAHelper.lastLayoutString != self._state.lastLayoutString:

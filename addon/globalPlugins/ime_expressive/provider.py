@@ -121,9 +121,20 @@ class ImeStateManager:
 	def resolveCompositionEnd(self, result: str) -> CompositionEndAction:
 		"""Determine what the controller should do when composition ends.
 
-		Mirrors the original handleInputCompositionEnd branch structure:
-		  if result:    speak result only if it matches lastCandidatesString
-		  else:         try index → selectedCandidate → fallback to punc
+		Resolution priority: result → selectedCandidate → index → punc fallback.
+
+		Why selectedCandidate before index:
+		  For Sogou IME, compositionEnd may arrive with empty result (from TSF's
+		  OnEndEdit). In some input fields a second compositionEnd with the correct
+		  result follows (from IMM32's WM_IME_ENDCOMPOSITION + GCS_RESULTSTR), but
+		  in others it does not — making empty-result the only event we receive.
+		  In that scenario, selectedCandidateIndex carries 0-based semantics (set by
+		  processCandidateUpdate from the IME's selectionIndex), while the index
+		  fallback path uses candidateList[index - 1] assuming 1-based (designed for
+		  digit-key selection via script_pressKey). This mismatch caused the wrong
+		  candidate to be spoken.  selectedCandidate is always set correctly by both
+		  arrow-key navigation (processCandidateUpdate) and digit-key selection
+		  (script_pressKey), so it is the safest primary source of truth.
 		"""
 		if result:
 			if not self.lastCandidatesString or result in self.lastCandidatesString:
@@ -132,6 +143,11 @@ class ImeStateManager:
 			log.debug(f"IME_EXP: Composition end — result '{result}' not in candidates, skipping")
 			return CompositionEndAction()
 		# No result — try to resolve what was selected
+		# Prefer selectedCandidate (reliable from both arrow-key and digit-key paths)
+		if self.selectedCandidate:
+			log.debug(f"IME_EXP: Composition end — using selected candidate: '{self.selectedCandidate}'")
+			return CompositionEndAction(textToSpeak=self.selectedCandidate)
+		# Fallback: resolve by index (for edge cases where selectedCandidate was not set)
 		if self.selectedCandidateIndex > 0:
 			try:
 				if self.modernImeCandidateMap:
@@ -151,11 +167,6 @@ class ImeStateManager:
 				return CompositionEndAction(textToSpeak=ch, resolvedFromIndex=True)
 			except Exception:
 				log.debug("IME_EXP: Failed to resolve candidate by index, falling back")
-				self.selectedCandidateIndex = 0
-				self.selectedCandidate = ""
-		if self.selectedCandidate:
-			log.debug(f"IME_EXP: Composition end — using selected candidate: '{self.selectedCandidate}'")
-			return CompositionEndAction(textToSpeak=self.selectedCandidate)
 		log.debug("IME_EXP: Composition end — no candidate found, deferring to punctuation check")
 		return CompositionEndAction(fallbackToPunc=True)
 
