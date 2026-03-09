@@ -164,10 +164,6 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 		nextHandler()
 
 	def event_UIA_elementSelected(self, obj: NVDAObject, nextHandler: Callable[[], None]) -> None:
-		# On Win11, elementSelected may fire before windowOpen — ignore until window is cached
-		if self._uia.cachedWindow is None:
-			nextHandler()
-			return
 		try:
 			if obj.windowClassName == "Windows.UI.Core.CoreWindow" and isinstance(obj, CandidateItem):
 				firstChild = obj.firstChild
