@@ -1,8 +1,6 @@
 # Chinese IME Support Add-on for NVDA
 
-This add-on provides Chinese input method support for the NVDA screen reader.
+This add-on provides robust Chinese input method support for the NVDA screen reader.
+It is designed to bridge the gap between standard NVDA behavior and Chinese users' specific input habits, significantly boosting typing efficiency.
 
-It enhances the Chinese input experience in terms of input habits and efficiency for NVDA users.
-
-**Note: This add-on may not be suitable for users of other languages and could have untested issues in non-Chinese environments.**
-
+**Note:** This add-on is localized for Chinese users. Compatibility and performance in non-Chinese environments are not guaranteed.
