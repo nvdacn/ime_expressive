@@ -176,12 +176,6 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 		finally:
 			nextHandler()
 
-	def event_UIA_notification(self, obj: NVDAObject, nextHandler: Callable[[], None], *args: Any, **kwargs: Any) -> None:
-		if obj.role == role.BUTTON and obj.UIAElement.cachedAutomationID == "NewNoteButton":
-			pass
-		else:
-			nextHandler()
-
 	def event_nameChange(self, obj: NVDAObject, nextHandler: Callable[[], None]) -> None:
 		try:
 			if (
