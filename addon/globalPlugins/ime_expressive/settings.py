@@ -13,6 +13,8 @@ NVDA's own InputCompositionPanel convention.
 
 from __future__ import annotations
 
+from collections.abc import Callable
+
 import addonHandler
 import config
 import gui
@@ -165,10 +167,24 @@ def _onSave(self) -> None:
 	config.conf[CONF_SECTION]["selectedLeftOrRight"] = self.imeSelectKeyChoice.GetSelection()
 	config.conf[CONF_SECTION]["reportCompositionStringChanges"] = self.imeReportCompChangesCheckBox.IsChecked()
 	log.debug("IME_EXP: Settings saved")
+	for cb in _saveCallbacks:
+		cb()
 
-
+_saveCallbacks: list[Callable[[], None]] = []
 _original_makeSettings = None
 _original_onSave = None
+
+
+def registerSaveCallback(callback: Callable[[], None]) -> None:
+	"""Register a callback to be invoked after settings are saved."""
+	if callback not in _saveCallbacks:
+		_saveCallbacks.append(callback)
+
+
+def unregisterSaveCallback(callback: Callable[[], None]) -> None:
+	"""Unregister a previously registered save callback."""
+	if callback in _saveCallbacks:
+		_saveCallbacks.remove(callback)
 
 
 def installSettingsPanel() -> None:
