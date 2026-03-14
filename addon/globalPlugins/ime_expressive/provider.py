@@ -137,6 +137,17 @@ class ImeStateManager:
 		  (script_pressKey), so it is the safest primary source of truth.
 		"""
 		if result:
+			# When we have a tracked candidate, validate result against it to reject
+			# stale compositionEnd events (e.g. Sogou fires two: first stale, then correct).
+			if self.selectedCandidate:
+				if result in self.selectedCandidate or self.selectedCandidate in result:
+					log.debug(f"IME_EXP: Composition end — result matches selected candidate: '{result}'")
+					return CompositionEndAction(textToSpeak=result)
+				log.debug(
+					f"IME_EXP: Composition end — result '{result}' doesn't match "
+					f"selected candidate '{self.selectedCandidate}', skipping"
+				)
+				return CompositionEndAction()
 			if not self.lastCandidatesString or result in self.lastCandidatesString:
 				log.debug(f"IME_EXP: Composition end — result matches candidates: '{result}'")
 				return CompositionEndAction(textToSpeak=result)
