@@ -56,6 +56,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 	Intercepts IME callbacks from NVDAHelper and UIA events to provide
 	character-by-character descriptions matching Chinese user habits.
 	"""
+	_MUTE_TRANSITION_TIMEOUT_MS = 150
 
 	def __init__(self):
 		super().__init__()
@@ -71,6 +72,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 		self._shouldMuteReturnTransition: bool = False
 		self._shouldSkipCompositionStart: bool = False
 		self._currentCompositionString: str = ""
+		self._muteTransitionTimer: wx.CallLater | None = None
 		self._entryGestures: dict[str, str] = settings.buildGestureMap()
 		self._installHooks()
 
@@ -130,8 +132,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 		if self._uia.isModernImeProcess(obj) and not self._state.isImeSessionFinished:
 			return
 		if self._shouldMuteReturnTransition:
-			self._shouldMuteReturnTransition = False
-			log.debug(f"IME_EXP: Muting return gainFocus on {obj.name}. Transition done.")
+			log.debug(f"IME_EXP: Muting return gainFocus on {obj.name}.")
 			return
 		if self._uia.isMicrosoftPinyinFromUia and isinstance(obj, UIA):
 			self._uia.isMicrosoftPinyinFromUia = False
@@ -273,10 +274,10 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 				if action.resolvedFromIndex:
 					self._clearIme()
 					if self._state.isMicrosoftPinyin:
-						self._shouldMuteReturnTransition = True
+						self._beginMuteTransition()
 					return
 		if self._state.isMicrosoftPinyin:
-			self._shouldMuteReturnTransition = True
+			self._beginMuteTransition()
 		self._clearIme()
 
 	def _speakCharacter(self, character: str, cancelFirst: bool = True, passthrough: bool = True) -> None:
@@ -310,6 +311,19 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 		charInfo.move(textInfos.UNIT_CHARACTER, 1)
 		api.setReviewPosition(charInfo)
 
+	def _beginMuteTransition(self) -> None:
+		"""Start mute transition to suppress redundant focus/foreground events when IME closes."""
+		self._shouldMuteReturnTransition = True
+		if self._muteTransitionTimer is not None:
+			self._muteTransitionTimer.Stop()
+		self._muteTransitionTimer = wx.CallLater(
+			self._MUTE_TRANSITION_TIMEOUT_MS, self._endMuteTransition
+		)
+
+	def _endMuteTransition(self) -> None:
+		self._shouldMuteReturnTransition = False
+		self._muteTransitionTimer = None
+
 	def _clearIme(self) -> None:
 		"""Reset all IME state, navigator object, and gesture bindings."""
 		self._state.clear()
@@ -319,6 +333,9 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 			self._setNavigatorObject(api.getFocusObject())
 		self._uia.invalidateCache()
 		self.clearGestureBindings()
+		if self._muteTransitionTimer is not None:
+			self._muteTransitionTimer.Stop()
+			self._muteTransitionTimer = None
 		log.debug("IME_EXP: IME state and gestures cleared")
 
 	def _resetCandidateDedup(self) -> None:
