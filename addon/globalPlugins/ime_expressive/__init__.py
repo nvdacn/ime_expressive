@@ -337,9 +337,6 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 			self._setNavigatorObject(api.getFocusObject())
 		self._uia.invalidateCache()
 		self.clearGestureBindings()
-		if self._muteTransitionTimer is not None:
-			self._muteTransitionTimer.Stop()
-			self._muteTransitionTimer = None
 		log.debug("IME_EXP: IME state and gestures cleared")
 
 	def _resetCandidateDedup(self) -> None:
