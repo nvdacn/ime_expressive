@@ -70,7 +70,6 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 		self._state = ImeStateManager()
 		self._uia = ModernImeHelper()
 		self._shouldMuteReturnTransition: bool = False
-		self._shouldSkipCompositionStart: bool = False
 		self._currentCompositionString: str = ""
 		self._muteTransitionTimer: wx.CallLater | None = None
 		self._entryGestures: dict[str, str] = settings.buildGestureMap()
@@ -119,6 +118,9 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 		if self._shouldMuteReturnTransition:
 			log.debug(f"IME_EXP: Muting return foreground on {obj.name}")
 			return
+		if self._state.isMicrosoftPinyin and not self._state.isImeSessionFinished:
+			log.debug(f"IME_EXP: Suppressing foreground during active IME session on {obj.name}")
+			return
 		nextHandler()
 
 	def event_focusEntered(self, obj: NVDAObject, nextHandler: Callable[[], None]) -> None:
@@ -144,7 +146,6 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 
 	def event_UIA_window_windowOpen(self, obj: NVDAObject, nextHandler: Callable[[], None]) -> None:
 		if self._uia.isImeCandidateWindow(obj):
-			self._shouldSkipCompositionStart = True
 			self._state.isMicrosoftPinyin = True
 			self._state.startSession()
 			log.debug("IME_EXP: Modern IME candidate window opened")
@@ -160,24 +161,28 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 						self.handleInputCandidateListUpdate(candidateText, 0, "ms")
 						self._setNavigatorObject(target)
 			except Exception:
-				log.debug("IME_EXP: Error processing modern IME window", exc_info=True)
+				log.debugWarning("IME_EXP: Error processing modern IME window")
 			return
-		nextHandler()
+		try:
+			nextHandler()
+		except TypeError:
+			log.debugWarning("IME_EXP: Suppressed TypeError in windowOpen (UIA element not ready)")
 
 	def event_UIA_elementSelected(self, obj: NVDAObject, nextHandler: Callable[[], None]) -> None:
-		try:
-			if obj.windowClassName == "Windows.UI.Core.CoreWindow" and isinstance(obj, CandidateItem):
-				firstChild = obj.firstChild
-				lastChild = obj.lastChild
-				if firstChild and lastChild:
-					self._uia.isMicrosoftPinyinFromUia = True
-					self._state.isMicrosoftPinyin = True
-					self.handleInputCandidateListUpdate(lastChild.name, int(firstChild.name) - 1, "ms")
-					self._setNavigatorObject(obj)
-		except Exception:
-			pass
-		finally:
-			nextHandler()
+		if self._uia.isModernImeProcess(obj):
+			try:
+				if isinstance(obj, CandidateItem):
+					firstChild = obj.firstChild
+					lastChild = obj.lastChild
+					if firstChild and lastChild:
+						self._uia.isMicrosoftPinyinFromUia = True
+						self._state.isMicrosoftPinyin = True
+						self.handleInputCandidateListUpdate(lastChild.name, int(firstChild.name) - 1, "ms")
+						self._setNavigatorObject(obj)
+			except Exception:
+				pass
+			return
+		nextHandler()
 
 	def event_nameChange(self, obj: NVDAObject, nextHandler: Callable[[], None]) -> None:
 		try:
@@ -192,8 +197,10 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 					self._state.recordCandidateSelection(int(previous.name), obj.name)
 		except Exception:
 			pass
-		finally:
+		try:
 			nextHandler()
+		except TypeError:
+			log.debugWarning("IME_EXP: Suppressed TypeError in nameChange (UIA element not ready)")
 
 	_inputConversionModeMessages: dict[int, tuple[str, str]] = {
 		1: ("中文", "英文"),
@@ -253,9 +260,6 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 		log.debug(f"IME_EXP: Composition start: '{compositionString}'")
 		self._currentCompositionString = compositionString
 		self._state.startSession()
-		if self._shouldSkipCompositionStart:
-			self._shouldSkipCompositionStart = False
-			return
 		try:
 			result = self._uia.findCandidateTarget()
 			if result:
@@ -332,7 +336,6 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 		"""Reset all IME state, navigator object, and gesture bindings."""
 		self._state.clear()
 		self._currentCompositionString = ""
-		self._shouldSkipCompositionStart = False
 		navObj = api.getNavigatorObject()
 		if navObj and not navObj.isFocusable and self._uia.isModernImeProcess(navObj):
 			self._setNavigatorObject(api.getFocusObject())
