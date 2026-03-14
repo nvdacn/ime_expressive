@@ -332,6 +332,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 		"""Reset all IME state, navigator object, and gesture bindings."""
 		self._state.clear()
 		self._currentCompositionString = ""
+		self._shouldSkipCompositionStart = False
 		navObj = api.getNavigatorObject()
 		if navObj and not navObj.isFocusable and self._uia.isModernImeProcess(navObj):
 			self._setNavigatorObject(api.getFocusObject())

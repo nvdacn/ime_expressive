@@ -180,6 +180,8 @@ class ImeStateManager:
 		self.candidateList = []
 		self.isMicrosoftPinyin = False
 		self.modernImeCandidateMap = {}
+		self.lastCompositionString = ""
+		self.lastModernImeEventTime = 0
 
 	def startSession(self) -> None:
 		"""Mark that an IME input session has started."""
