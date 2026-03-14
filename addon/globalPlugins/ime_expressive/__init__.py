@@ -126,7 +126,10 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 			return
 		if self._shouldMuteReturnTransition:
 			return
-		nextHandler()
+		try:
+			nextHandler()
+		except TypeError:
+			log.debug("IME_EXP: Suppressed TypeError in focusEntered (UIA element not ready)", exc_info=True)
 
 	def event_gainFocus(self, obj: NVDAObject, nextHandler: Callable[[], None]) -> None:
 		if self._uia.isModernImeProcess(obj) and not self._state.isImeSessionFinished:
