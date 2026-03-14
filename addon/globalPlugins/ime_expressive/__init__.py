@@ -143,6 +143,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 		if self._uia.isImeCandidateWindow(obj):
 			self._shouldSkipCompositionStart = True
 			self._state.isMicrosoftPinyin = True
+			self._state.startSession()
 			log.debug("IME_EXP: Modern IME candidate window opened")
 			try:
 				firstChild = obj.firstChild
