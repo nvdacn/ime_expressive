@@ -17,6 +17,7 @@ from collections.abc import Callable
 from typing import Any
 
 import api
+import addonHandler
 import brailleInput
 import characterProcessing
 import config
@@ -39,6 +40,7 @@ from .describer import CandidateDescriber
 from .provider import ImeStateManager
 from .uiaHelper import ModernImeHelper
 
+addonHandler.initTranslation()
 
 # Virtual key codes used in script_pressKey
 VK_ESCAPE = 27
@@ -208,12 +210,28 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 		except TypeError:
 			log.debugWarning("IME_EXP: Suppressed TypeError in nameChange (UIA element not ready)")
 
-	_inputConversionModeMessages: dict[int, tuple[str, str]] = {
-		1: ("中文", "英文"),
-		8: ("全角", "半角"),
-		1024: ("中文标点", "英文标点"),
-	}
-
+	@property
+	def _inputConversionModeMessages(self) -> dict[int, tuple[str, str]]:
+		return {
+			1: (
+				# Translators: The message spoken when IME switches to Chinese input mode.
+				_("Chinese"),
+				# Translators: The message spoken when IME switches to English input mode.
+				_("English"),
+			),
+			8: (
+				# Translators: The message spoken when IME switches to full-width character mode.
+				_("Full shape"),
+				# Translators: The message spoken when IME switches to half-width character mode.
+				_("Half shape"),
+			),
+			1024: (
+				# Translators: The message spoken when IME switches to Chinese punctuation mode.
+				_("Chinese punctuation"),
+				# Translators: The message spoken when IME switches to English punctuation mode.
+				_("English punctuation"),
+			),
+		}
 	def handleInputConversionModeUpdate(self, oldFlags: int, newFlags: int, lcid: int) -> None:
 		log.debug(f"IME_EXP: Conversion mode: {oldFlags} -> {newFlags}, lcid={lcid}")
 		self._clearIme()
