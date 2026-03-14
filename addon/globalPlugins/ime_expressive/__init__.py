@@ -1,12 +1,12 @@
 # -*- coding: UTF-8 -*-
 # A part of NonVisual Desktop Access (NVDA)
-# Copyright (C) 2022-2025 NVDA Chinese Community Contributors
+# Copyright (C) 2022-2026 NVDA Chinese Community Contributors
 # This file is covered by the GNU General Public License.
 # See the file COPYING for more details.
 
 """IME Expressive — Enhanced Chinese IME speech feedback for NVDA.
 
-Provides character-by-character explanations for IME candidates,
+Provides character-by-character descriptions for IME candidates,
 modern IME (Windows 11 UIA) support, and customizable speech behavior.
 """
 
@@ -56,10 +56,8 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 	"""Enhanced Chinese IME feedback for NVDA.
 
 	Intercepts IME callbacks from NVDAHelper and UIA events to provide
-	character-by-character explanations matching Chinese user habits.
+	character-by-character descriptions matching Chinese user habits.
 	"""
-
-	scriptCategory = "IME Expressive"
 
 	def __init__(self):
 		super().__init__()
