@@ -28,7 +28,6 @@ import speech
 import textInfos
 import winUser
 import wx
-from buildVersion import version_year
 from keyboardHandler import KeyboardInputGesture
 from logHandler import log
 from NVDAObjects import NVDAObject
@@ -40,7 +39,6 @@ from .describer import CandidateDescriber
 from .provider import ImeStateManager
 from .uiaHelper import ModernImeHelper
 
-role = controlTypes.Role if version_year >= 2022 else controlTypes.role.Role
 
 # Virtual key codes used in script_pressKey
 VK_ESCAPE = 27
@@ -180,7 +178,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 		try:
 			if (
 				self._state.isMicrosoftPinyin
-				and obj.role == role.STATICTEXT
+				and obj.role == controlTypes.Role.STATICTEXT
 				and obj.windowClassName == "Windows.UI.Core.CoreWindow"
 				and isinstance(obj.parent, CandidateItem)
 			):
