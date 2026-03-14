@@ -118,6 +118,16 @@ class CandidateDescriber:
 		- Prefix always spoken with cancel=True (default).
 		- Description spoken with cancel=True only if prefix was NOT spoken.
 		"""
+		# English words: always speak the word first, then optionally spell it out.
+		if candidate.isascii() and candidate.isalpha() and len(candidate) >= 1:
+			from . import settings
+			prefixText = candidate
+			descriptionText = self.describeCharacters(candidate) if settings.isSpellEnglishCandidates() else None
+			log.debug(
+				f"IME_EXP: buildSpeechParts('{candidate}', english=True) "
+				f"-> prefix={prefixText!r}, description={descriptionText!r}, cancelDescription=False"
+			)
+			return prefixText, descriptionText, False
 		try:
 			candidateLen = self.computeEffectiveLength(candidate)
 		except Exception:

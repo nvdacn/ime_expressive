@@ -33,6 +33,7 @@ confspec: dict[str, str] = {
 	"reportCandidateBeforeDescription": "integer(default=2)",
 	"selectedLeftOrRight": "integer(default=0)",
 	"navigateKeys": "integer(default=0)",
+	"spellEnglishCandidates": "boolean(default=False)",
 	"reportCompositionStringChanges": "boolean(default=True)",
 }
 
@@ -60,6 +61,10 @@ def getNavigateKeyMode() -> NavigateKeyMode:
 
 def isAutoReportAllCandidates() -> bool:
 	return config.conf[CONF_SECTION]["autoReportAllCandidates"]
+
+
+def isSpellEnglishCandidates() -> bool:
+	return config.conf[CONF_SECTION]["spellEnglishCandidates"]
 
 
 def isReportCompositionStringChanges() -> bool:
@@ -165,6 +170,17 @@ def _makeSettings(self, settingsSizer: wx.Sizer) -> None:
 		],
 	)
 	self.imeNavigateKeyChoice.SetSelection(config.conf[CONF_SECTION]["navigateKeys"])
+	self.imeSpellEnglishCheckBox = helper.addItem(
+		wx.CheckBox(
+			self,
+			label=_(
+				# Translators: The label for a checkbox in input composition settings
+				# to spell out English word candidates character by character.
+				"Spell out English word candidates"
+			),
+		)
+	)
+	self.imeSpellEnglishCheckBox.SetValue(config.conf[CONF_SECTION]["spellEnglishCandidates"])
 	self.imeReportCompChangesCheckBox = helper.addItem(
 		wx.CheckBox(
 			self,
@@ -185,6 +201,7 @@ def _onSave(self) -> None:
 	config.conf[CONF_SECTION]["reportCandidateBeforeDescription"] = self.imeReportThresholdChoice.GetSelection()
 	config.conf[CONF_SECTION]["selectedLeftOrRight"] = self.imeSelectKeyChoice.GetSelection()
 	config.conf[CONF_SECTION]["navigateKeys"] = self.imeNavigateKeyChoice.GetSelection()
+	config.conf[CONF_SECTION]["spellEnglishCandidates"] = self.imeSpellEnglishCheckBox.IsChecked()
 	config.conf[CONF_SECTION]["reportCompositionStringChanges"] = self.imeReportCompChangesCheckBox.IsChecked()
 	log.debug("IME_EXP: Settings saved")
 	for cb in _saveCallbacks:
