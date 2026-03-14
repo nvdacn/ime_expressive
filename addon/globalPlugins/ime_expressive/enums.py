@@ -47,3 +47,11 @@ class SelectKeyMode(IntEnum):
 	BRACKETS = 1
 	COMMA_PERIOD = 2
 	PAGE_UPDOWN = 3
+
+
+class NavigateKeyMode(IntEnum):
+	"""Key bindings for navigating to previous/next candidate."""
+
+	NVDA_S_F = 0
+	NVDA_J_L = 1
+	NVDA_F_J = 2

@@ -21,7 +21,7 @@ import gui
 import wx
 from logHandler import log
 
-from .enums import DescriptionMode, ReportThreshold, SelectKeyMode
+from .enums import DescriptionMode, NavigateKeyMode, ReportThreshold, SelectKeyMode
 
 addonHandler.initTranslation()
 
@@ -32,6 +32,7 @@ confspec: dict[str, str] = {
 	"candidateCharacterDescription": "integer(default=2)",
 	"reportCandidateBeforeDescription": "integer(default=2)",
 	"selectedLeftOrRight": "integer(default=0)",
+	"navigateKeys": "integer(default=0)",
 	"reportCompositionStringChanges": "boolean(default=True)",
 }
 
@@ -51,6 +52,10 @@ def getReportThreshold() -> ReportThreshold:
 
 def getSelectKeyMode() -> SelectKeyMode:
 	return SelectKeyMode(config.conf[CONF_SECTION]["selectedLeftOrRight"])
+
+
+def getNavigateKeyMode() -> NavigateKeyMode:
+	return NavigateKeyMode(config.conf[CONF_SECTION]["navigateKeys"])
 
 
 def isAutoReportAllCandidates() -> bool:
@@ -146,6 +151,20 @@ def _makeSettings(self, settingsSizer: wx.Sizer) -> None:
 		],
 	)
 	self.imeSelectKeyChoice.SetSelection(config.conf[CONF_SECTION]["selectedLeftOrRight"])
+	self.imeNavigateKeyChoice = helper.addLabeledControl(
+		_(
+			# Translators: The label for a choice in input composition settings
+			# configuring the shortcut for navigating to previous/next candidate.
+			"Navigate candidate shortcut"
+		),
+		wx.Choice,
+		choices=[
+			"NVDA+S / NVDA+F",
+			"NVDA+J / NVDA+L",
+			"NVDA+F / NVDA+J",
+		],
+	)
+	self.imeNavigateKeyChoice.SetSelection(config.conf[CONF_SECTION]["navigateKeys"])
 	self.imeReportCompChangesCheckBox = helper.addItem(
 		wx.CheckBox(
 			self,
@@ -165,6 +184,7 @@ def _onSave(self) -> None:
 	config.conf[CONF_SECTION]["candidateCharacterDescription"] = self.imeDescriptionModeChoice.GetSelection()
 	config.conf[CONF_SECTION]["reportCandidateBeforeDescription"] = self.imeReportThresholdChoice.GetSelection()
 	config.conf[CONF_SECTION]["selectedLeftOrRight"] = self.imeSelectKeyChoice.GetSelection()
+	config.conf[CONF_SECTION]["navigateKeys"] = self.imeNavigateKeyChoice.GetSelection()
 	config.conf[CONF_SECTION]["reportCompositionStringChanges"] = self.imeReportCompChangesCheckBox.IsChecked()
 	log.debug("IME_EXP: Settings saved")
 	for cb in _saveCallbacks:
@@ -217,9 +237,17 @@ def buildGestureMap() -> dict[str, str]:
 		"kb:leftArrow": "pressKey",
 		"kb:rightArrow": "pressKey",
 		"kb:escape": "pressKey",
-		"kb:nvda+s": "pressKeyUp",
-		"kb:nvda+f": "pressKeyDown",
 	}
+	navMode = getNavigateKeyMode()
+	if navMode == NavigateKeyMode.NVDA_S_F:
+		gestures["kb:nvda+s"] = "pressKeyUp"
+		gestures["kb:nvda+f"] = "pressKeyDown"
+	elif navMode == NavigateKeyMode.NVDA_J_L:
+		gestures["kb:nvda+j"] = "pressKeyUp"
+		gestures["kb:nvda+l"] = "pressKeyDown"
+	elif navMode == NavigateKeyMode.NVDA_F_J:
+		gestures["kb:nvda+f"] = "pressKeyUp"
+		gestures["kb:nvda+j"] = "pressKeyDown"
 	mode = getSelectKeyMode()
 	if mode == SelectKeyMode.BRACKETS:
 		gestures["kb:["] = "selectLeft"
