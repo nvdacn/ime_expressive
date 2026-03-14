@@ -74,6 +74,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 		self._muteTransitionTimer: wx.CallLater | None = None
 		self._entryGestures: dict[str, str] = settings.buildGestureMap()
 		self._installHooks()
+		settings.registerSaveCallback(self._onSettingsSaved)
 
 	def _installHooks(self) -> None:
 		"""Monkey-patch NVDAHelper and CandidateItem methods."""
@@ -100,6 +101,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 		NVDAHelper.handleInputCompositionStart = self._originalHooks.get("NVDAHelper.handleInputCompositionStart", NVDAHelper.handleInputCompositionStart)
 		NVDAHelper.handleInputCompositionEnd = self._originalHooks.get("NVDAHelper.handleInputCompositionEnd", NVDAHelper.handleInputCompositionEnd)
 		NVDAHelper.handleInputConversionModeUpdate = self._originalHooks.get("NVDAHelper.handleInputConversionModeUpdate", NVDAHelper.handleInputConversionModeUpdate)
+		settings.unregisterSaveCallback(self._onSettingsSaved)
 		settings.restoreSettingsPanel()
 		super().terminate()
 
@@ -111,6 +113,10 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 
 	def _noopReportFocus(self) -> None:
 		pass
+
+	def _onSettingsSaved(self) -> None:
+		self._entryGestures = settings.buildGestureMap()
+		log.debug("IME_EXP: Gesture map rebuilt after settings change")
 
 	def event_foreground(self, obj: NVDAObject, nextHandler: Callable[[], None]) -> None:
 		if self._uia.isModernImeProcess(obj) and not self._state.isImeSessionFinished:
