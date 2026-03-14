@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 'ime_expressive' '2024.3.21'\n"
 "Report-Msgid-Bugs-To: 'nvda-translations@groups.io'\n"
-"POT-Creation-Date: 2026-03-06 10:47+0800\n"
-"PO-Revision-Date: 2026-03-06 10:49+0800\n"
+"POT-Creation-Date: 2026-03-15 03:07+0800\n"
+"PO-Revision-Date: 2026-03-15 03:09+0800\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: zh_CN\n"
@@ -26,118 +26,160 @@ msgstr "{description}的{symbol}"
 
 #. Translators: The label for a checkbox in input composition settings
 #. to automatically report all candidates when the candidate window appears.
-#: addon\globalPlugins\ime_expressive\settings.py:75
+#: addon\globalPlugins\ime_expressive\settings.py:87
 msgid "Report all candidates automatically"
 msgstr "自动朗读所有候选项"
 
 #. Translators: The label for a choice in input composition settings
 #. configuring how many characters of a candidate should be described.
-#: addon\globalPlugins\ime_expressive\settings.py:84
+#: addon\globalPlugins\ime_expressive\settings.py:96
 msgid "Candidate character description pattern"
 msgstr "候选项字符解释模式"
 
 #. Translators: A choice indicating character description is disabled.
-#: addon\globalPlugins\ime_expressive\settings.py:89
+#: addon\globalPlugins\ime_expressive\settings.py:101
 msgid "Off"
 msgstr "关闭"
 
 #. Translators: A choice indicating up to 1 character will be described.
-#: addon\globalPlugins\ime_expressive\settings.py:91
+#: addon\globalPlugins\ime_expressive\settings.py:103
 msgid "Up to 1 character"
 msgstr "单字"
 
 #. Translators: A choice indicating up to 2 characters will be described.
-#: addon\globalPlugins\ime_expressive\settings.py:93
+#: addon\globalPlugins\ime_expressive\settings.py:105
 msgid "Up to 2 characters"
 msgstr "双字"
 
 #. Translators: A choice indicating up to 3 characters will be described.
-#: addon\globalPlugins\ime_expressive\settings.py:95
+#: addon\globalPlugins\ime_expressive\settings.py:107
 msgid "Up to 3 characters"
 msgstr "三字"
 
 #. Translators: A choice indicating up to 4 characters will be described.
-#: addon\globalPlugins\ime_expressive\settings.py:97
+#: addon\globalPlugins\ime_expressive\settings.py:109
 msgid "Up to 4 characters"
 msgstr "四字"
 
 #. Translators: A choice indicating all characters will be described.
-#: addon\globalPlugins\ime_expressive\settings.py:99
+#: addon\globalPlugins\ime_expressive\settings.py:111
 msgid "All characters"
 msgstr "全解释"
 
 #. Translators: The label for a choice in input composition settings
 #. configuring whether the candidate name is reported before character descriptions.
-#: addon\globalPlugins\ime_expressive\settings.py:107
+#: addon\globalPlugins\ime_expressive\settings.py:119
 msgid "Report candidate before description"
 msgstr "字符解释前先朗读候选项"
 
 #. Translators: A choice indicating candidate name is reported for 1 char or more.
-#: addon\globalPlugins\ime_expressive\settings.py:112
+#: addon\globalPlugins\ime_expressive\settings.py:124
 msgid "For 1 character or more"
 msgstr "从 1 个字开始"
 
 #. Translators: A choice indicating candidate name is reported for 2 chars or more.
-#: addon\globalPlugins\ime_expressive\settings.py:114
+#: addon\globalPlugins\ime_expressive\settings.py:126
 msgid "For 2 characters or more"
 msgstr "从 2 个字开始"
 
 #. Translators: A choice indicating candidate name is reported for 3 chars or more.
-#: addon\globalPlugins\ime_expressive\settings.py:116
+#: addon\globalPlugins\ime_expressive\settings.py:128
 msgid "For 3 characters or more"
 msgstr "从 3 个字开始"
 
 #. Translators: A choice indicating candidate name is reported for 4 chars or more.
-#: addon\globalPlugins\ime_expressive\settings.py:118
+#: addon\globalPlugins\ime_expressive\settings.py:130
 msgid "For 4 characters or more"
 msgstr "从 4 个字开始"
 
 #. Translators: A choice indicating candidate name is reported for 5 chars or more.
-#: addon\globalPlugins\ime_expressive\settings.py:120
+#: addon\globalPlugins\ime_expressive\settings.py:132
 msgid "For 5 characters or more"
 msgstr "从 5 个字开始"
 
 #. Translators: A choice indicating candidate name is reported for 6 chars or more.
-#: addon\globalPlugins\ime_expressive\settings.py:122
+#: addon\globalPlugins\ime_expressive\settings.py:134
 msgid "For 6 characters or more"
 msgstr "从 6 个字开始"
 
 #. Translators: A choice indicating candidate name is never reported before description.
-#: addon\globalPlugins\ime_expressive\settings.py:124
+#: addon\globalPlugins\ime_expressive\settings.py:136
 msgid "Never"
 msgstr "从不"
 
 #. Translators: The label for a choice in input composition settings
 #. configuring the shortcut for selecting a candidate character.
-#: addon\globalPlugins\ime_expressive\settings.py:132
+#: addon\globalPlugins\ime_expressive\settings.py:144
 msgid "Select candidate character shortcut"
 msgstr "以词定字快捷键"
 
 #. Translators: A choice indicating no shortcut is assigned.
-#: addon\globalPlugins\ime_expressive\settings.py:137
+#: addon\globalPlugins\ime_expressive\settings.py:149
 msgid "None"
 msgstr "无"
 
 #. Translators: A choice indicating left/right brackets are used as shortcuts.
-#: addon\globalPlugins\ime_expressive\settings.py:139
+#: addon\globalPlugins\ime_expressive\settings.py:151
 msgid "[ / ]"
 msgstr "左/右方括号"
 
 #. Translators: A choice indicating comma/period are used as shortcuts.
-#: addon\globalPlugins\ime_expressive\settings.py:141
+#: addon\globalPlugins\ime_expressive\settings.py:153
 msgid ", / ."
 msgstr "逗号/句号"
 
 #. Translators: A choice indicating PageUp/PageDown are used as shortcuts.
-#: addon\globalPlugins\ime_expressive\settings.py:143
+#: addon\globalPlugins\ime_expressive\settings.py:155
 msgid "PageUp / PageDown"
 msgstr "上/下翻页"
 
+#. Translators: The label for a choice in input composition settings
+#. configuring the shortcut for navigating to previous/next candidate.
+#: addon\globalPlugins\ime_expressive\settings.py:163
+msgid "Navigate candidate shortcut"
+msgstr "候选项导航按键"
+
+#. Translators: The label for a checkbox in input composition settings
+#. to spell out English word candidates character by character.
+#: addon\globalPlugins\ime_expressive\settings.py:179
+msgid "Spell out English word candidates"
+msgstr "拼读英文单词候选项"
+
 #. Translators: The label for a checkbox in input composition settings
 #. to report composition string changes during typing.
-#: addon\globalPlugins\ime_expressive\settings.py:153
+#: addon\globalPlugins\ime_expressive\settings.py:190
 msgid "Report composition string changes"
 msgstr "读出上屏字符"
+
+#. Translators: The message spoken when IME switches to Chinese input mode.
+#: addon\globalPlugins\ime_expressive\__init__.py:218
+msgid "Chinese"
+msgstr "中文"
+
+#. Translators: The message spoken when IME switches to English input mode.
+#: addon\globalPlugins\ime_expressive\__init__.py:220
+msgid "English"
+msgstr "英文"
+
+#. Translators: The message spoken when IME switches to full-width character mode.
+#: addon\globalPlugins\ime_expressive\__init__.py:224
+msgid "Full shape"
+msgstr "全角"
+
+#. Translators: The message spoken when IME switches to half-width character mode.
+#: addon\globalPlugins\ime_expressive\__init__.py:226
+msgid "Half shape"
+msgstr "半角"
+
+#. Translators: The message spoken when IME switches to Chinese punctuation mode.
+#: addon\globalPlugins\ime_expressive\__init__.py:230
+msgid "Chinese punctuation"
+msgstr "中文标点"
+
+#. Translators: The message spoken when IME switches to English punctuation mode.
+#: addon\globalPlugins\ime_expressive\__init__.py:232
+msgid "English punctuation"
+msgstr "英文标点"
 
 #. Add-on summary, usually the user visible name of the addon.
 #. Translators: Summary for this add-on
