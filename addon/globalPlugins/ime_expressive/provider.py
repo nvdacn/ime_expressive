@@ -137,6 +137,11 @@ class ImeStateManager:
 		  (script_pressKey), so it is the safest primary source of truth.
 		"""
 		if result:
+			if self.isMicrosoftPinyin:
+				log.debug(
+					f"IME_EXP: Composition end — trusting committed result from modern Microsoft IME: '{result}'"
+				)
+				return CompositionEndAction(textToSpeak=result)
 			# When we have a tracked candidate, validate result against it to reject
 			# stale compositionEnd events (e.g. Sogou fires two: first stale, then correct).
 			if self.selectedCandidate:
