@@ -282,7 +282,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 
 	def handleInputCompositionStart(self, compositionString: str, selectionStart: int, selectionEnd: int, isReading: bool) -> None:
 		log.debug(f"IME_EXP: Composition start: '{compositionString}'")
-		self._currentCompositionString = compositionString
+		self._currentCompositionString = compositionString.strip()
 		self._state.startSession()
 		try:
 			result = self._uia.findCandidateTarget()
