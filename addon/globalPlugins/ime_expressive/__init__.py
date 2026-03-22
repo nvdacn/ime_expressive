@@ -20,6 +20,7 @@ import api
 import addonHandler
 import brailleInput
 import characterProcessing
+from comtypes import COMError
 import config
 import controlTypes
 import globalPluginHandler
@@ -161,7 +162,16 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 		if self._shouldSuppressTypedEcho(ch):
 			log.debug(f"IME_EXP: Suppressing typedCharacter during IME session: {ch!r}")
 			return
-		nextHandler()
+		try:
+			nextHandler()
+		except COMError:
+			if isinstance(obj, UIA) and self._uia.isModernImeProcess(obj):
+				log.debugWarning(
+					"IME_EXP: Suppressed COMError in typedCharacter for unavailable IME UIA object",
+					exc_info=True,
+				)
+				return
+			raise
 
 	def event_foreground(self, obj: NVDAObject, nextHandler: Callable[[], None]) -> None:
 		if self._uia.isModernImeProcess(obj) and not self._state.isImeSessionFinished:
@@ -413,8 +423,17 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 		self._lastNonTrackedInputTime = None
 		speech.clearTypedWordBuffer()
 		navObj = api.getNavigatorObject()
-		if navObj and not navObj.isFocusable and self._uia.isModernImeProcess(navObj):
-			self._setNavigatorObject(api.getFocusObject())
+		if navObj and self._uia.isModernImeProcess(navObj):
+			try:
+				shouldRestoreNavigator = not navObj.isFocusable
+			except COMError:
+				log.debugWarning(
+					"IME_EXP: Navigator object became unavailable while clearing IME state",
+					exc_info=True,
+				)
+				shouldRestoreNavigator = True
+			if shouldRestoreNavigator:
+				self._setNavigatorObject(api.getFocusObject())
 		self._uia.invalidateCache()
 		self.clearGestureBindings()
 		log.debug("IME_EXP: IME state and gestures cleared")
