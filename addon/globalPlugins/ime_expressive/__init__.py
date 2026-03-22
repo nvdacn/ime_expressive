@@ -23,6 +23,7 @@ import characterProcessing
 import config
 import controlTypes
 import globalPluginHandler
+import inputCore
 import NVDAHelper
 import queueHandler
 import speech
@@ -74,9 +75,13 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 		self._shouldMuteReturnTransition: bool = False
 		self._currentCompositionString: str = ""
 		self._lastAutoReportCandidatesString: str = ""
+		self._lastNonTrackedInputTime: int | None = None
+		self._lastInputToken: int | None = None
+		self._nextInputToken: int = 0
 		self._muteTransitionTimer: wx.CallLater | None = None
 		self._entryGestures: dict[str, str] = settings.buildGestureMap()
 		self._installHooks()
+		inputCore.decide_executeGesture.register(self._onDecideExecuteGesture)
 		settings.registerSaveCallback(self._onSettingsSaved)
 
 	def _installHooks(self) -> None:
@@ -104,6 +109,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 		NVDAHelper.handleInputCompositionStart = self._originalHooks.get("NVDAHelper.handleInputCompositionStart", NVDAHelper.handleInputCompositionStart)
 		NVDAHelper.handleInputCompositionEnd = self._originalHooks.get("NVDAHelper.handleInputCompositionEnd", NVDAHelper.handleInputCompositionEnd)
 		NVDAHelper.handleInputConversionModeUpdate = self._originalHooks.get("NVDAHelper.handleInputConversionModeUpdate", NVDAHelper.handleInputConversionModeUpdate)
+		inputCore.decide_executeGesture.unregister(self._onDecideExecuteGesture)
 		settings.unregisterSaveCallback(self._onSettingsSaved)
 		settings.restoreSettingsPanel()
 		super().terminate()
@@ -120,6 +126,22 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 	def _onSettingsSaved(self) -> None:
 		self._entryGestures = settings.buildGestureMap()
 		log.debug("IME_EXP: Gesture map rebuilt after settings change")
+
+	def _onDecideExecuteGesture(self, gesture: inputCore.InputGesture) -> bool:
+		if gesture.isModifier:
+			return True
+		self._nextInputToken += 1
+		self._lastInputToken = self._nextInputToken
+		return True
+
+	def _refreshNonTrackedDedupBoundary(self) -> None:
+		if self._currentCompositionString or self._state.isMicrosoftPinyin:
+			return
+		currentInputToken = self._lastInputToken
+		if currentInputToken is None or currentInputToken == self._lastNonTrackedInputTime:
+			return
+		self._lastNonTrackedInputTime = currentInputToken
+		self._state.lastCandidatesString = ""
 
 	def event_foreground(self, obj: NVDAObject, nextHandler: Callable[[], None]) -> None:
 		if self._uia.isModernImeProcess(obj) and not self._state.isImeSessionFinished:
@@ -256,15 +278,13 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 		self._describer.reportThreshold = settings.getReportThreshold()
 		if NVDAHelper.lastLayoutString != self._state.lastLayoutString:
 			self._state.lastLayoutString = NVDAHelper.lastLayoutString
+		self._refreshNonTrackedDedupBoundary()
 		update = self._state.processCandidateUpdate(
 			candidatesString, selectionIndex, self._currentCompositionString, inputMethod
 		)
 		if update is None:
 			return
-		# For IMEs without composition tracking (e.g. Sogou), reset dedup state after
-		# the current event loop cycle so cross-keystroke same-content updates get through.
-		if not self._currentCompositionString:
-			wx.CallAfter(self._resetCandidateDedup)
+
 		candidate = update.candidate
 		pageChanged = candidatesString != self._lastAutoReportCandidatesString
 		self._lastAutoReportCandidatesString = candidatesString
@@ -300,7 +320,10 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 	def handleInputCompositionEnd(self, result: str) -> None:
 		log.debug(f"IME_EXP: Composition end: result='{result}'")
 		if settings.isReportCompositionStringChanges():
-			action = self._state.resolveCompositionEnd(result)
+			action = self._state.resolveCompositionEnd(
+				result,
+				inputEventToken=self._lastInputToken,
+			)
 			if action.fallbackToPunc:
 				wx.CallLater(40, self._speakPunc)
 			elif action.textToSpeak is not None:
@@ -363,6 +386,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 		self._state.clear()
 		self._currentCompositionString = ""
 		self._lastAutoReportCandidatesString = ""
+		self._lastNonTrackedInputTime = None
 		navObj = api.getNavigatorObject()
 		if navObj and not navObj.isFocusable and self._uia.isModernImeProcess(navObj):
 			self._setNavigatorObject(api.getFocusObject())
@@ -370,15 +394,6 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 		self.clearGestureBindings()
 		log.debug("IME_EXP: IME state and gestures cleared")
 
-	def _resetCandidateDedup(self) -> None:
-		"""Reset candidate dedup state between keystroke batches.
-
-		Called via wx.CallAfter for IMEs without composition tracking (e.g. Sogou).
-		Fires after all duplicate RPC callbacks from the same keystroke have been
-		processed, allowing the next keystroke's updates to pass through even if
-		the candidate content is identical.
-		"""
-		self._state.lastCandidatesString = ""
 
 	def _setNavigatorObject(self, obj: NVDAObject) -> None:
 		if config.conf["reviewCursor"]["followFocus"]:

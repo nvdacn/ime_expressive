@@ -60,7 +60,35 @@ class ImeStateManager:
 		self.lastCompositionString: str = ""
 		self.lastLayoutString: str = ""
 		self.modernImeCandidateMap: dict[int, str] = {}
-		self.lastModernImeEventTime: float = 0
+		self.lastCompositionEndText: str = ""
+		self.lastCompositionEndInputToken: int | None = None
+
+	def _buildCompositionEndAction(
+		self,
+		textToSpeak: str | None = None,
+		*,
+		fallbackToPunc: bool = False,
+		resolvedFromIndex: bool = False,
+		inputEventToken: int | None = None,
+	) -> CompositionEndAction:
+		if textToSpeak and (
+			inputEventToken is not None
+			and inputEventToken == self.lastCompositionEndInputToken
+			and textToSpeak == self.lastCompositionEndText
+		):
+			log.debug(
+				f"IME_EXP: Composition end — skipping duplicate committed text "
+				f"for same input: '{textToSpeak}'"
+			)
+			return CompositionEndAction()
+		if textToSpeak:
+			self.lastCompositionEndText = textToSpeak
+			self.lastCompositionEndInputToken = inputEventToken
+		return CompositionEndAction(
+			textToSpeak=textToSpeak,
+			fallbackToPunc=fallbackToPunc,
+			resolvedFromIndex=resolvedFromIndex,
+		)
 
 	def shouldSkipUpdate(self, candidatesString: str, selectionIndex: int, compositionString: str, inputMethod: str) -> bool:
 		"""Check if this update should be skipped (session finished or exact duplicate)."""
@@ -118,7 +146,11 @@ class ImeStateManager:
 			isMultiCandidate=isMultiCandidate,
 		)
 
-	def resolveCompositionEnd(self, result: str) -> CompositionEndAction:
+	def resolveCompositionEnd(
+		self,
+		result: str,
+		inputEventToken: int | None = None,
+	) -> CompositionEndAction:
 		"""Determine what the controller should do when composition ends.
 
 		Resolution priority: result → selectedCandidate → index → punc fallback.
@@ -135,19 +167,24 @@ class ImeStateManager:
 		  candidate to be spoken.  selectedCandidate is always set correctly by both
 		  arrow-key navigation (processCandidateUpdate) and digit-key selection
 		  (script_pressKey), so it is the safest primary source of truth.
+
+		For non-Microsoft IMEs, some environments emit two composition-end events:
+		a stale partial result first, then the actual committed text. When that
+		happens, prefer the tracked selected candidate over the shorter partial
+		result and suppress duplicate speech within the same input event.
 		"""
 		if result:
 			if self.isMicrosoftPinyin:
 				log.debug(
 					f"IME_EXP: Composition end — trusting committed result from modern Microsoft IME: '{result}'"
 				)
-				return CompositionEndAction(textToSpeak=result)
+				return self._buildCompositionEndAction(result, inputEventToken=inputEventToken)
 			# When we have a tracked candidate, validate result against it to reject
 			# stale compositionEnd events (e.g. Sogou fires two: first stale, then correct).
 			if self.selectedCandidate:
 				if result in self.selectedCandidate or self.selectedCandidate in result:
 					log.debug(f"IME_EXP: Composition end — result matches selected candidate: '{result}'")
-					return CompositionEndAction(textToSpeak=result)
+					return self._buildCompositionEndAction(result, inputEventToken=inputEventToken)
 				log.debug(
 					f"IME_EXP: Composition end — result '{result}' doesn't match "
 					f"selected candidate '{self.selectedCandidate}', skipping"
@@ -155,14 +192,17 @@ class ImeStateManager:
 				return CompositionEndAction()
 			if not self.lastCandidatesString or result in self.lastCandidatesString:
 				log.debug(f"IME_EXP: Composition end — result matches candidates: '{result}'")
-				return CompositionEndAction(textToSpeak=result)
+				return self._buildCompositionEndAction(result, inputEventToken=inputEventToken)
 			log.debug(f"IME_EXP: Composition end — result '{result}' not in candidates, skipping")
 			return CompositionEndAction()
 		# No result — try to resolve what was selected
 		# Prefer selectedCandidate (reliable from both arrow-key and digit-key paths)
 		if self.selectedCandidate:
 			log.debug(f"IME_EXP: Composition end — using selected candidate: '{self.selectedCandidate}'")
-			return CompositionEndAction(textToSpeak=self.selectedCandidate)
+			return self._buildCompositionEndAction(
+				self.selectedCandidate,
+				inputEventToken=inputEventToken,
+			)
 		# Fallback: resolve by index (for edge cases where selectedCandidate was not set)
 		if self.selectedCandidateIndex > 0:
 			try:
@@ -180,11 +220,18 @@ class ImeStateManager:
 				log.debug(
 					f"IME_EXP: Composition end — resolved from index {self.selectedCandidateIndex}: '{ch}'"
 				)
-				return CompositionEndAction(textToSpeak=ch, resolvedFromIndex=True)
+				return self._buildCompositionEndAction(
+					ch,
+					resolvedFromIndex=True,
+					inputEventToken=inputEventToken,
+				)
 			except Exception:
 				log.debug("IME_EXP: Failed to resolve candidate by index, falling back")
 		log.debug("IME_EXP: Composition end — no candidate found, deferring to punctuation check")
-		return CompositionEndAction(fallbackToPunc=True)
+		return self._buildCompositionEndAction(
+			fallbackToPunc=True,
+			inputEventToken=inputEventToken,
+		)
 
 	def clear(self) -> None:
 		"""Reset all IME session state."""
@@ -197,7 +244,8 @@ class ImeStateManager:
 		self.isMicrosoftPinyin = False
 		self.modernImeCandidateMap = {}
 		self.lastCompositionString = ""
-		self.lastModernImeEventTime = 0
+		self.lastCompositionEndText = ""
+		self.lastCompositionEndInputToken = None
 
 	def startSession(self) -> None:
 		"""Mark that an IME input session has started."""
