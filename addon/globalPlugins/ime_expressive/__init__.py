@@ -349,6 +349,9 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 				wx.CallLater(40, self._speakPunc)
 			elif action.textToSpeak is not None:
 				self._speakCharacter(action.textToSpeak)
+				# Let NVDA drop the immediate typed-character echo emitted by some IMEs
+				# after the committed text has already been spoken.
+				speech._suppressSpeakTypedCharacters(len(action.textToSpeak))
 				if action.resolvedFromIndex:
 					self._clearIme()
 					if self._state.isMicrosoftPinyin:
