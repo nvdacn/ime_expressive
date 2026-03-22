@@ -49,6 +49,8 @@ VK_1 = 49
 VK_9 = 57
 # LCID for Simplified Chinese (used to detect Chinese IME active)
 LCID_CHINESE_SIMPLIFIED = 2052
+PRIMARY_LANGUAGE_MASK = 0x3FF
+LANG_CHINESE = 0x04
 
 CONF_SECTION = "imeExpressive"
 
@@ -142,6 +144,24 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 			return
 		self._lastNonTrackedInputTime = currentInputToken
 		self._state.lastCandidatesString = ""
+
+	def _shouldSuppressTypedEcho(self, ch: str) -> bool:
+		# Keep this local to actual Chinese IME composition / candidate sessions
+		# so that normal typing echo outside Chinese input remains untouched.
+		if self._state.isImeSessionFinished and not self._currentCompositionString:
+			return False
+		languageID = NVDAHelper.lastLanguageID
+		if languageID is None or (languageID & PRIMARY_LANGUAGE_MASK) != LANG_CHINESE:
+			return False
+		# Suppress only raw ASCII keystrokes that commonly leak through as pinyin /
+		# typing echo during composition. Do not suppress committed CJK text.
+		return ch.isascii() and (ch.isalpha() or ch in (" ", "'", "\b"))
+
+	def event_typedCharacter(self, obj: NVDAObject, nextHandler: Callable[[], None], ch: str) -> None:
+		if self._shouldSuppressTypedEcho(ch):
+			log.debug(f"IME_EXP: Suppressing typedCharacter during IME session: {ch!r}")
+			return
+		nextHandler()
 
 	def event_foreground(self, obj: NVDAObject, nextHandler: Callable[[], None]) -> None:
 		if self._uia.isModernImeProcess(obj) and not self._state.isImeSessionFinished:
@@ -306,6 +326,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 		log.debug(f"IME_EXP: Composition start: '{compositionString}'")
 		self._currentCompositionString = compositionString.strip()
 		self._state.startSession()
+		speech.clearTypedWordBuffer()
 		try:
 			result = self._uia.findCandidateTarget()
 			if result:
@@ -387,6 +408,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 		self._currentCompositionString = ""
 		self._lastAutoReportCandidatesString = ""
 		self._lastNonTrackedInputTime = None
+		speech.clearTypedWordBuffer()
 		navObj = api.getNavigatorObject()
 		if navObj and not navObj.isFocusable and self._uia.isModernImeProcess(navObj):
 			self._setNavigatorObject(api.getFocusObject())
