@@ -73,6 +73,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 		self._uia = ModernImeHelper()
 		self._shouldMuteReturnTransition: bool = False
 		self._currentCompositionString: str = ""
+		self._lastAutoReportCandidatesString: str = ""
 		self._muteTransitionTimer: wx.CallLater | None = None
 		self._entryGestures: dict[str, str] = settings.buildGestureMap()
 		self._installHooks()
@@ -265,11 +266,12 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 		if not self._currentCompositionString:
 			wx.CallAfter(self._resetCandidateDedup)
 		candidate = update.candidate
-		if settings.isAutoReportAllCandidates():
+		pageChanged = candidatesString != self._lastAutoReportCandidatesString
+		self._lastAutoReportCandidatesString = candidatesString
+		if settings.isAutoReportAllCandidates() and update.isMultiCandidate and pageChanged:
 			self.bindGestures(self._entryGestures)
 			msg = self._describer.formatAllCandidates(candidatesString, selectionIndex)
-			isMulti = "\n" in candidatesString
-			self._speakCharacter(msg, passthrough=not isMulti)
+			self._speakCharacter(msg, passthrough=False)
 			return
 		# Normal mode — use describer
 		prefixText, descriptionText, cancelBeforeDescription = self._describer.buildSpeechParts(candidate)
@@ -360,6 +362,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 		"""Reset all IME state, navigator object, and gesture bindings."""
 		self._state.clear()
 		self._currentCompositionString = ""
+		self._lastAutoReportCandidatesString = ""
 		navObj = api.getNavigatorObject()
 		if navObj and not navObj.isFocusable and self._uia.isModernImeProcess(navObj):
 			self._setNavigatorObject(api.getFocusObject())

@@ -92,16 +92,20 @@ class CandidateDescriber:
 	def formatAllCandidates(self, candidatesString: str, selectionIndex: int) -> str:
 		"""Format all candidates for autoReport mode.
 
-		Multi-candidate: "候选1 1；候选2 2；..."
-		Single candidate: "候选文本 N"
+		Multi-candidate: expressive descriptions with positions.
+		Single candidate: descriptive fallback with position.
 		"""
-		if "\n" in candidatesString:
-			items = candidatesString.split("\n")
-			parts: list[str] = []
-			for i, item in enumerate(items, start=1):
-				parts.append(f"{item}{i}")
-			return "； ".join(parts) + "； "
-		return candidatesString + str(selectionIndex + 1)
+		items = candidatesString.split("\n") if candidatesString else []
+		parts: list[str] = []
+		for i, item in enumerate(items, start=1):
+			candidate = item.replace(" ", "").replace("(", "").replace(")", "")
+			description = self.describeCharacters(candidate) if candidate else item
+			parts.append(f"{description} {i}")
+		if len(parts) > 1:
+			return "；".join(parts)
+		if len(parts) == 1:
+			return parts[0]
+		return str(selectionIndex + 1)
 
 	def buildSpeechParts(
 		self,
