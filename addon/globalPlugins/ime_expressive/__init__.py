@@ -23,6 +23,7 @@ import characterProcessing
 from comtypes import COMError
 import config
 import controlTypes
+import eventHandler
 import globalPluginHandler
 import inputCore
 import NVDAHelper
@@ -158,14 +159,57 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 		# typing echo during composition. Do not suppress committed CJK text.
 		return ch.isascii() and (ch.isalpha() or ch in (" ", "'", "\b"))
 
+	def _isLikelyModernImeTypedCharacterTarget(self, obj: NVDAObject, ch: str) -> bool:
+		if not isinstance(obj, UIA):
+			return False
+		if self._uia.isModernImeProcess(obj):
+			return True
+		languageID = NVDAHelper.lastLanguageID
+		if languageID is None or (languageID & PRIMARY_LANGUAGE_MASK) != LANG_CHINESE:
+			return False
+		if not ch.isascii():
+			return False
+		# Stale candidate UIA objects can lose enough state that process detection
+		# fails, while still arriving as typedCharacter targets. Limit this fallback
+		# to active Chinese IME contexts and candidate-like UIA object types.
+		return type(obj).__name__ in {"ListItem", "List"}
+
+	def _tryRedirectTypedCharacterToRealFocus(self, obj: NVDAObject, ch: str) -> bool:
+		if not self._isLikelyModernImeTypedCharacterTarget(obj, ch):
+			return False
+		try:
+			realFocus = api.getDesktopObject().objectWithFocus()
+		except Exception:
+			return False
+		if not realFocus or realFocus == obj:
+			return False
+		if self._isLikelyModernImeTypedCharacterTarget(realFocus, ch):
+			return False
+		try:
+			if not api.setFocusObject(realFocus):
+				return False
+		except Exception:
+			log.debugWarning(
+				"IME_EXP: Failed to restore real focus before replaying typedCharacter",
+				exc_info=True,
+			)
+			return False
+		log.debug(
+			f"IME_EXP: Redirecting typedCharacter from IME UIA object to real focus: {ch!r}"
+		)
+		eventHandler.executeEvent("typedCharacter", realFocus, ch=ch)
+		return True
+
 	def event_typedCharacter(self, obj: NVDAObject, nextHandler: Callable[[], None], ch: str) -> None:
+		if self._tryRedirectTypedCharacterToRealFocus(obj, ch):
+			return
 		if self._shouldSuppressTypedEcho(ch):
 			log.debug(f"IME_EXP: Suppressing typedCharacter during IME session: {ch!r}")
 			return
 		try:
 			nextHandler()
 		except COMError:
-			if isinstance(obj, UIA) and self._uia.isModernImeProcess(obj):
+			if self._isLikelyModernImeTypedCharacterTarget(obj, ch):
 				log.debugWarning(
 					"IME_EXP: Suppressed COMError in typedCharacter for unavailable IME UIA object",
 					exc_info=True,
