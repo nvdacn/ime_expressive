@@ -399,6 +399,9 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 				result,
 				inputEventToken=self._lastInputToken,
 			)
+			if action.awaitMoreResults:
+				self._clearIme()
+				return
 			if action.fallbackToPunc:
 				wx.CallLater(40, self._speakPunc)
 			elif action.textToSpeak is not None:
@@ -406,12 +409,8 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 				# Let NVDA drop the immediate typed-character echo emitted by some IMEs
 				# after the committed text has already been spoken.
 				speech._suppressSpeakTypedCharacters(len(action.textToSpeak))
-				if action.resolvedFromIndex:
-					self._clearIme()
-					if self._state.isMicrosoftPinyin:
-						self._beginMuteTransition()
-					return
-		if self._state.isMicrosoftPinyin:
+		wasMicrosoftPinyin = self._state.isMicrosoftPinyin
+		if wasMicrosoftPinyin:
 			self._beginMuteTransition()
 		self._clearIme()
 
