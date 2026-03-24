@@ -185,15 +185,6 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 			return False
 		if self._isLikelyModernImeTypedCharacterTarget(realFocus, ch):
 			return False
-		try:
-			if not api.setFocusObject(realFocus):
-				return False
-		except Exception:
-			log.debugWarning(
-				"IME_EXP: Failed to restore real focus before replaying typedCharacter",
-				exc_info=True,
-			)
-			return False
 		log.debug(
 			f"IME_EXP: Redirecting typedCharacter from IME UIA object to real focus: {ch!r}"
 		)
