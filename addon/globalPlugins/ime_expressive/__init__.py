@@ -51,8 +51,6 @@ VK_1 = 49
 VK_9 = 57
 # LCID for Simplified Chinese (used to detect Chinese IME active)
 LCID_CHINESE_SIMPLIFIED = 2052
-PRIMARY_LANGUAGE_MASK = 0x3FF
-LANG_CHINESE = 0x04
 
 CONF_SECTION = "imeExpressive"
 
@@ -147,35 +145,35 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 		self._lastNonTrackedInputTime = currentInputToken
 		self._state.lastCandidatesString = ""
 
+	def _isModernMicrosoftPinyinSessionActive(self) -> bool:
+		"""Return True only for the modern Microsoft IME UIA path on Win11."""
+		return self._state.isMicrosoftPinyin and not self._state.isImeSessionFinished
+
 	def _shouldSuppressTypedEcho(self, ch: str) -> bool:
-		# Keep this local to actual Chinese IME composition / candidate sessions
-		# so that normal typing echo outside Chinese input remains untouched.
-		if self._state.isImeSessionFinished and not self._currentCompositionString:
-			return False
-		languageID = NVDAHelper.lastLanguageID
-		if languageID is None or (languageID & PRIMARY_LANGUAGE_MASK) != LANG_CHINESE:
+		# Raw ASCII typedCharacter leakage is a modern Microsoft Pinyin quirk.
+		# Do not treat it as a global Chinese IME behavior.
+		if not self._isModernMicrosoftPinyinSessionActive():
 			return False
 		# Suppress only raw ASCII keystrokes that commonly leak through as pinyin /
 		# typing echo during composition. Do not suppress committed CJK text.
 		return ch.isascii() and (ch.isalpha() or ch in (" ", "'", "\b"))
 
-	def _isLikelyModernImeTypedCharacterTarget(self, obj: NVDAObject, ch: str) -> bool:
+	def _isModernMicrosoftPinyinTypedCharacterTarget(self, obj: NVDAObject, ch: str) -> bool:
 		if not isinstance(obj, UIA):
 			return False
 		if self._uia.isModernImeProcess(obj):
 			return True
-		languageID = NVDAHelper.lastLanguageID
-		if languageID is None or (languageID & PRIMARY_LANGUAGE_MASK) != LANG_CHINESE:
+		if not self._isModernMicrosoftPinyinSessionActive():
 			return False
 		if not ch.isascii():
 			return False
 		# Stale candidate UIA objects can lose enough state that process detection
-		# fails, while still arriving as typedCharacter targets. Limit this fallback
-		# to active Chinese IME contexts and candidate-like UIA object types.
+		# fails, while still arriving as typedCharacter targets. Keep this fallback
+		# scoped to an already-active modern Microsoft Pinyin session.
 		return type(obj).__name__ in {"ListItem", "List"}
 
 	def _tryRedirectTypedCharacterToRealFocus(self, obj: NVDAObject, ch: str) -> bool:
-		if not self._isLikelyModernImeTypedCharacterTarget(obj, ch):
+		if not self._isModernMicrosoftPinyinTypedCharacterTarget(obj, ch):
 			return False
 		try:
 			realFocus = api.getDesktopObject().objectWithFocus()
@@ -183,7 +181,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 			return False
 		if not realFocus or realFocus == obj:
 			return False
-		if self._isLikelyModernImeTypedCharacterTarget(realFocus, ch):
+		if self._isModernMicrosoftPinyinTypedCharacterTarget(realFocus, ch):
 			return False
 		log.debug(
 			f"IME_EXP: Redirecting typedCharacter from IME UIA object to real focus: {ch!r}"
@@ -200,7 +198,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 		try:
 			nextHandler()
 		except COMError:
-			if self._isLikelyModernImeTypedCharacterTarget(obj, ch):
+			if self._isModernMicrosoftPinyinTypedCharacterTarget(obj, ch):
 				log.debugWarning(
 					"IME_EXP: Suppressed COMError in typedCharacter for unavailable IME UIA object",
 					exc_info=True,
@@ -209,6 +207,8 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 			raise
 
 	def event_foreground(self, obj: NVDAObject, nextHandler: Callable[[], None]) -> None:
+		# Focus noise suppression is specific to the Win11 Microsoft Pinyin
+		# TextInputHost candidate window lifecycle.
 		if self._uia.isModernImeProcess(obj) and not self._state.isImeSessionFinished:
 			return
 		if self._shouldMuteReturnTransition:
@@ -220,6 +220,8 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 		nextHandler()
 
 	def event_focusEntered(self, obj: NVDAObject, nextHandler: Callable[[], None]) -> None:
+		# Focus noise suppression is specific to the Win11 Microsoft Pinyin
+		# TextInputHost candidate window lifecycle.
 		if self._uia.isModernImeProcess(obj) and not self._state.isImeSessionFinished:
 			return
 		if self._shouldMuteReturnTransition:
@@ -230,6 +232,8 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 			log.debug("IME_EXP: Suppressed TypeError in focusEntered (UIA element not ready)", exc_info=True)
 
 	def event_gainFocus(self, obj: NVDAObject, nextHandler: Callable[[], None]) -> None:
+		# Focus noise suppression is specific to the Win11 Microsoft Pinyin
+		# TextInputHost candidate window lifecycle.
 		if self._uia.isModernImeProcess(obj) and not self._state.isImeSessionFinished:
 			return
 		if self._shouldMuteReturnTransition:
