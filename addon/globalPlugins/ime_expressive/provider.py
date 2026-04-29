@@ -101,7 +101,7 @@ class ImeStateManager:
 		):
 			log.debug(
 				f"IME_EXP: Composition end - skipping duplicate committed text "
-				f"for same input: '{textToSpeak}'"
+				f"for same input: '{textToSpeak}'",
 			)
 			return CompositionEndAction()
 		if textToSpeak:
@@ -194,7 +194,7 @@ class ImeStateManager:
 		self.selectedCandidate = candidate
 		log.debug(
 			f"IME_EXP: Candidate update processed: '{candidate}', "
-			f"index={selectionIndex}, multi={isMultiCandidate}"
+			f"index={selectionIndex}, multi={isMultiCandidate}",
 		)
 		return CandidateUpdate(
 			candidate=candidate,
@@ -218,7 +218,7 @@ class ImeStateManager:
 		if result:
 			if self.isMicrosoftPinyin:
 				log.debug(
-					f"IME_EXP: Composition end - trusting committed result from modern Microsoft IME: '{result}'"
+					f"IME_EXP: Composition end - trusting committed result from modern Microsoft IME: '{result}'",
 				)
 				return self._buildCompositionEndAction(result, inputEventToken=inputEventToken)
 			# When we have a tracked candidate, validate result against it to reject
@@ -230,14 +230,16 @@ class ImeStateManager:
 					return self._buildCompositionEndAction(result, inputEventToken=inputEventToken)
 				log.debug(
 					f"IME_EXP: Composition end - result '{result}' doesn't match "
-					f"selected candidate '{selectedCandidate}', waiting for follow-up"
+					f"selected candidate '{selectedCandidate}', waiting for follow-up",
 				)
 				self._captureCompositionEndSnapshot(inputEventToken)
 				return CompositionEndAction(awaitMoreResults=True)
 			if not lastCandidatesString or result in lastCandidatesString:
 				log.debug(f"IME_EXP: Composition end - result matches candidates: '{result}'")
 				return self._buildCompositionEndAction(result, inputEventToken=inputEventToken)
-			log.debug(f"IME_EXP: Composition end - result '{result}' not in candidates, waiting for follow-up")
+			log.debug(
+				f"IME_EXP: Composition end - result '{result}' not in candidates, waiting for follow-up",
+			)
 			self._captureCompositionEndSnapshot(inputEventToken)
 			return CompositionEndAction(awaitMoreResults=True)
 		if selectedCandidate:
@@ -256,11 +258,11 @@ class ImeStateManager:
 					ch = ch[:-1]
 				if not ch:
 					log.debug(
-						f"IME_EXP: Composition end - resolved empty candidate from index {selectedCandidateIndex}"
+						f"IME_EXP: Composition end - resolved empty candidate from index {selectedCandidateIndex}",
 					)
 					return CompositionEndAction()
 				log.debug(
-					f"IME_EXP: Composition end - resolved from index {selectedCandidateIndex}: '{ch}'"
+					f"IME_EXP: Composition end - resolved from index {selectedCandidateIndex}: '{ch}'",
 				)
 				return self._buildCompositionEndAction(
 					ch,

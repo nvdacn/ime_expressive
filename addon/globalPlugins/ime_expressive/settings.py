@@ -84,16 +84,16 @@ def _makeSettings(self, settingsSizer: wx.Sizer) -> None:
 			label=_(
 				# Translators: The label for a checkbox in input composition settings
 				# to automatically report all candidates when the candidate window appears.
-				"Report all candidates automatically"
+				"Report all candidates automatically",
 			),
-		)
+		),
 	)
 	self.imeAutoReportCheckBox.SetValue(config.conf[CONF_SECTION]["autoReportAllCandidates"])
 	self.imeDescriptionModeChoice = helper.addLabeledControl(
 		_(
 			# Translators: The label for a choice in input composition settings
 			# configuring how many characters of a candidate should be described.
-			"Candidate character description pattern"
+			"Candidate character description pattern",
 		),
 		wx.Choice,
 		choices=[
@@ -116,7 +116,7 @@ def _makeSettings(self, settingsSizer: wx.Sizer) -> None:
 		_(
 			# Translators: The label for a choice in input composition settings
 			# configuring whether the candidate name is reported before character descriptions.
-			"Report candidate before description"
+			"Report candidate before description",
 		),
 		wx.Choice,
 		choices=[
@@ -141,7 +141,7 @@ def _makeSettings(self, settingsSizer: wx.Sizer) -> None:
 		_(
 			# Translators: The label for a choice in input composition settings
 			# configuring the shortcut for selecting a candidate character.
-			"Select candidate character shortcut"
+			"Select candidate character shortcut",
 		),
 		wx.Choice,
 		choices=[
@@ -160,7 +160,7 @@ def _makeSettings(self, settingsSizer: wx.Sizer) -> None:
 		_(
 			# Translators: The label for a choice in input composition settings
 			# configuring the shortcut for navigating to previous/next candidate.
-			"Navigate candidate shortcut"
+			"Navigate candidate shortcut",
 		),
 		wx.Choice,
 		choices=[
@@ -176,9 +176,9 @@ def _makeSettings(self, settingsSizer: wx.Sizer) -> None:
 			label=_(
 				# Translators: The label for a checkbox in input composition settings
 				# to spell out English word candidates character by character.
-				"Spell out English word candidates"
+				"Spell out English word candidates",
 			),
-		)
+		),
 	)
 	self.imeSpellEnglishCheckBox.SetValue(config.conf[CONF_SECTION]["spellEnglishCandidates"])
 	self.imeReportCompChangesCheckBox = helper.addItem(
@@ -187,9 +187,9 @@ def _makeSettings(self, settingsSizer: wx.Sizer) -> None:
 			label=_(
 				# Translators: The label for a checkbox in input composition settings
 				# to report composition string changes during typing.
-				"Report composition string changes"
+				"Report composition string changes",
 			),
-		)
+		),
 	)
 	self.imeReportCompChangesCheckBox.SetValue(config.conf[CONF_SECTION]["reportCompositionStringChanges"])
 
@@ -198,14 +198,19 @@ def _onSave(self) -> None:
 	"""Replacement onSave for InputCompositionPanel."""
 	config.conf[CONF_SECTION]["autoReportAllCandidates"] = self.imeAutoReportCheckBox.IsChecked()
 	config.conf[CONF_SECTION]["candidateCharacterDescription"] = self.imeDescriptionModeChoice.GetSelection()
-	config.conf[CONF_SECTION]["reportCandidateBeforeDescription"] = self.imeReportThresholdChoice.GetSelection()
+	config.conf[CONF_SECTION]["reportCandidateBeforeDescription"] = (
+		self.imeReportThresholdChoice.GetSelection()
+	)
 	config.conf[CONF_SECTION]["selectedLeftOrRight"] = self.imeSelectKeyChoice.GetSelection()
 	config.conf[CONF_SECTION]["navigateKeys"] = self.imeNavigateKeyChoice.GetSelection()
 	config.conf[CONF_SECTION]["spellEnglishCandidates"] = self.imeSpellEnglishCheckBox.IsChecked()
-	config.conf[CONF_SECTION]["reportCompositionStringChanges"] = self.imeReportCompChangesCheckBox.IsChecked()
+	config.conf[CONF_SECTION]["reportCompositionStringChanges"] = (
+		self.imeReportCompChangesCheckBox.IsChecked()
+	)
 	log.debug("IME_EXP: Settings saved")
 	for cb in _saveCallbacks:
 		cb()
+
 
 _saveCallbacks: list[Callable[[], None]] = []
 _original_makeSettings = None
