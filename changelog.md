@@ -1,3 +1,3 @@
-### 2026.4.30.1
+### 2026.4.30.2
 
-Bump version, compatible with NVDA 2026.1.0.
+Bump version.
