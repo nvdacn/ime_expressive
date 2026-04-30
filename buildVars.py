@@ -1,9 +1,7 @@
-# -*- coding: UTF-8 -*-
-
 # Build customizations
 # Change this file instead of sconstruct or manifest files, whenever possible.
 
-from site_scons.site_tools.NVDATool.typings import AddonInfo, BrailleTables, SymbolDictionaries
+from site_scons.site_tools.NVDATool.typings import AddonInfo, BrailleTables, SymbolDictionaries, SpeechDictionaries
 
 # Since some strings in `addon_info` are translatable,
 # we need to include them in the .po files.
@@ -17,12 +15,12 @@ from site_scons.site_tools.NVDATool.utils import _
 addon_info = AddonInfo(
 	# add-on Name/identifier, internal for NVDA
 	addon_name="ime_expressive",
-	# Add-on summary, usually the user visible name of the addon.
-	# Translators: Summary for this add-on
-	# to be shown on installation and add-on information found in Add-ons Manager.
+	# Add-on summary/title, usually the user visible name of the add-on
+	# Translators: Summary/title for this add-on
+	# to be shown on installation and add-on information found in add-on store
 	addon_summary=_("Chinese input method support for NVDA"),
 	# Add-on description
-	# Translators: Long description to be shown for this add-on on add-on information from add-ons manager
+	# Translators: Long description to be shown for this add-on on add-on information from add-on store
 	addon_description=_("""This add-on provides Chinese input method support for the NVDA screen reader.
 It enhances the Chinese input experience in terms of input habits and efficiency for NVDA users."""),
 	# version
@@ -40,9 +38,9 @@ Bump version."""),
 	addon_sourceURL="https://github.com/nvdacn/ime_expressive",
 	# Documentation file name
 	addon_docFileName="readme.html",
-	# Minimum NVDA version supported (e.g. "2018.3.0", minor version is optional)
+	# Minimum NVDA version supported (e.g. "2019.3.0", minor version is optional)
 	addon_minimumNVDAVersion="2023.1.0",
-	# Last NVDA version supported/tested (e.g. "2018.4.0", ideally more recent than minimum version)
+	# Last NVDA version supported/tested (e.g. "2024.4.0", ideally more recent than minimum version)
 	addon_lastTestedNVDAVersion="2025.1.0",
 	# Add-on update channel (default is None, denoting stable releases,
 	# and for development releases, use "dev".)
@@ -72,6 +70,8 @@ i18nSources: list[str] = pythonSources + ["buildVars.py"]
 
 # Files that will be ignored when building the nvda-addon file
 # Paths are relative to the addon directory, not to the root directory of your addon sources.
+# You can either list every file (using ""/") as a path separator,
+# or use glob expressions.
 excludedFiles: list[str] = []
 
 # Base language for the NVDA add-on
@@ -103,5 +103,14 @@ brailleTables: BrailleTables = {}
 # Each key is the name of the dictionary,
 # with keys inside recording the following attributes:
 # displayName (name of the speech dictionary shown to users and translatable),
-# mandatory (True when always enabled, False when not.
+# mandatory (True when always enabled, False when not).
 symbolDictionaries: SymbolDictionaries = {}
+
+# Custom speech dictionaries (distinct from symbol dictionaries above)
+# Speech dictionary files reside in the speechDicts folder and are named `name.dic`.
+# If your add-on includes custom speech (pronunciation) dictionaries (most will not), fill out this dictionary.
+# Each key is the name of the dictionary,
+# with keys inside recording the following attributes:
+# displayName (name of the speech dictionary shown to users and translatable),
+# mandatory (True when always enabled, False when not).
+speechDictionaries: SpeechDictionaries = {}

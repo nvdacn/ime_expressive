@@ -31,7 +31,7 @@ _IME_CANDIDATE_AUTOMATION_IDS = frozenset(
 		"IME_Prediction_Window",
 		"TEMPLATE_PART_CandidatePanel",
 		"CandidateWindowControl",
-	}
+	},
 )
 
 

@@ -61,6 +61,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 	Intercepts IME callbacks from NVDAHelper and UIA events to provide
 	character-by-character descriptions matching Chinese user habits.
 	"""
+
 	_MUTE_TRANSITION_TIMEOUT_MS = 150
 
 	def __init__(self):
@@ -88,13 +89,21 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 
 	def _installHooks(self) -> None:
 		"""Monkey-patch NVDAHelper and CandidateItem methods."""
-		self._originalHooks["CandidateItem.getFormattedCandidateName"] = CandidateItem.getFormattedCandidateName
-		self._originalHooks["CandidateItem.getFormattedCandidateDescription"] = CandidateItem.getFormattedCandidateDescription
+		self._originalHooks["CandidateItem.getFormattedCandidateName"] = (
+			CandidateItem.getFormattedCandidateName
+		)
+		self._originalHooks["CandidateItem.getFormattedCandidateDescription"] = (
+			CandidateItem.getFormattedCandidateDescription
+		)
 		self._originalHooks["CandidateItem.reportFocus"] = CandidateItem.reportFocus
-		self._originalHooks["NVDAHelper.handleInputCandidateListUpdate"] = NVDAHelper.handleInputCandidateListUpdate
+		self._originalHooks["NVDAHelper.handleInputCandidateListUpdate"] = (
+			NVDAHelper.handleInputCandidateListUpdate
+		)
 		self._originalHooks["NVDAHelper.handleInputCompositionStart"] = NVDAHelper.handleInputCompositionStart
 		self._originalHooks["NVDAHelper.handleInputCompositionEnd"] = NVDAHelper.handleInputCompositionEnd
-		self._originalHooks["NVDAHelper.handleInputConversionModeUpdate"] = NVDAHelper.handleInputConversionModeUpdate
+		self._originalHooks["NVDAHelper.handleInputConversionModeUpdate"] = (
+			NVDAHelper.handleInputConversionModeUpdate
+		)
 		CandidateItem.getFormattedCandidateName = self._noopFormatter
 		CandidateItem.getFormattedCandidateDescription = self._noopDescFormatter
 		CandidateItem.reportFocus = self._noopReportFocus
@@ -104,13 +113,34 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 		NVDAHelper.handleInputConversionModeUpdate = self.handleInputConversionModeUpdate
 
 	def terminate(self) -> None:
-		CandidateItem.getFormattedCandidateName = self._originalHooks.get("CandidateItem.getFormattedCandidateName", CandidateItem.getFormattedCandidateName)
-		CandidateItem.getFormattedCandidateDescription = self._originalHooks.get("CandidateItem.getFormattedCandidateDescription", CandidateItem.getFormattedCandidateDescription)
-		CandidateItem.reportFocus = self._originalHooks.get("CandidateItem.reportFocus", CandidateItem.reportFocus)
-		NVDAHelper.handleInputCandidateListUpdate = self._originalHooks.get("NVDAHelper.handleInputCandidateListUpdate", NVDAHelper.handleInputCandidateListUpdate)
-		NVDAHelper.handleInputCompositionStart = self._originalHooks.get("NVDAHelper.handleInputCompositionStart", NVDAHelper.handleInputCompositionStart)
-		NVDAHelper.handleInputCompositionEnd = self._originalHooks.get("NVDAHelper.handleInputCompositionEnd", NVDAHelper.handleInputCompositionEnd)
-		NVDAHelper.handleInputConversionModeUpdate = self._originalHooks.get("NVDAHelper.handleInputConversionModeUpdate", NVDAHelper.handleInputConversionModeUpdate)
+		CandidateItem.getFormattedCandidateName = self._originalHooks.get(
+			"CandidateItem.getFormattedCandidateName",
+			CandidateItem.getFormattedCandidateName,
+		)
+		CandidateItem.getFormattedCandidateDescription = self._originalHooks.get(
+			"CandidateItem.getFormattedCandidateDescription",
+			CandidateItem.getFormattedCandidateDescription,
+		)
+		CandidateItem.reportFocus = self._originalHooks.get(
+			"CandidateItem.reportFocus",
+			CandidateItem.reportFocus,
+		)
+		NVDAHelper.handleInputCandidateListUpdate = self._originalHooks.get(
+			"NVDAHelper.handleInputCandidateListUpdate",
+			NVDAHelper.handleInputCandidateListUpdate,
+		)
+		NVDAHelper.handleInputCompositionStart = self._originalHooks.get(
+			"NVDAHelper.handleInputCompositionStart",
+			NVDAHelper.handleInputCompositionStart,
+		)
+		NVDAHelper.handleInputCompositionEnd = self._originalHooks.get(
+			"NVDAHelper.handleInputCompositionEnd",
+			NVDAHelper.handleInputCompositionEnd,
+		)
+		NVDAHelper.handleInputConversionModeUpdate = self._originalHooks.get(
+			"NVDAHelper.handleInputConversionModeUpdate",
+			NVDAHelper.handleInputConversionModeUpdate,
+		)
 		inputCore.decide_executeGesture.unregister(self._onDecideExecuteGesture)
 		settings.unregisterSaveCallback(self._onSettingsSaved)
 		settings.restoreSettingsPanel()
@@ -184,7 +214,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 		if self._isModernMicrosoftPinyinTypedCharacterTarget(realFocus, ch):
 			return False
 		log.debug(
-			f"IME_EXP: Redirecting typedCharacter from IME UIA object to real focus: {ch!r}"
+			f"IME_EXP: Redirecting typedCharacter from IME UIA object to real focus: {ch!r}",
 		)
 		eventHandler.executeEvent("typedCharacter", realFocus, ch=ch)
 		return True
@@ -324,6 +354,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 				_("English punctuation"),
 			),
 		}
+
 	def handleInputConversionModeUpdate(self, oldFlags: int, newFlags: int, lcid: int) -> None:
 		log.debug(f"IME_EXP: Conversion mode: {oldFlags} -> {newFlags}, lcid={lcid}")
 		self._clearIme()
@@ -338,10 +369,15 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 				self._speakCharacter(msgs[0] if newOn else msgs[1], cancelFirst=False)
 				break
 
-	def handleInputCandidateListUpdate(self, candidatesString: str, selectionIndex: int, inputMethod: str) -> None:
+	def handleInputCandidateListUpdate(
+		self,
+		candidatesString: str,
+		selectionIndex: int,
+		inputMethod: str,
+	) -> None:
 		log.debug(
 			f"IME_EXP: Candidate list update: string='{candidatesString}', "
-			f"index={selectionIndex}, method={inputMethod}"
+			f"index={selectionIndex}, method={inputMethod}",
 		)
 		self._describer.descriptionMode = settings.getDescriptionMode()
 		self._describer.reportThreshold = settings.getReportThreshold()
@@ -349,7 +385,10 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 			self._state.lastLayoutString = NVDAHelper.lastLayoutString
 		self._refreshNonTrackedDedupBoundary()
 		update = self._state.processCandidateUpdate(
-			candidatesString, selectionIndex, self._currentCompositionString, inputMethod
+			candidatesString,
+			selectionIndex,
+			self._currentCompositionString,
+			inputMethod,
 		)
 		if update is None:
 			return
@@ -371,7 +410,13 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 			self.bindGestures(self._entryGestures)
 			self._speakCharacter(descriptionText, cancelFirst=cancelBeforeDescription)
 
-	def handleInputCompositionStart(self, compositionString: str, selectionStart: int, selectionEnd: int, isReading: bool) -> None:
+	def handleInputCompositionStart(
+		self,
+		compositionString: str,
+		selectionStart: int,
+		selectionEnd: int,
+		isReading: bool,
+	) -> None:
 		log.debug(f"IME_EXP: Composition start: '{compositionString}'")
 		self._currentCompositionString = compositionString.strip()
 		self._state.startSession()
@@ -446,7 +491,8 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 		if self._muteTransitionTimer is not None:
 			self._muteTransitionTimer.Stop()
 		self._muteTransitionTimer = wx.CallLater(
-			self._MUTE_TRANSITION_TIMEOUT_MS, self._endMuteTransition
+			self._MUTE_TRANSITION_TIMEOUT_MS,
+			self._endMuteTransition,
 		)
 
 	def _endMuteTransition(self) -> None:
@@ -475,7 +521,6 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 		self._uia.invalidateCache()
 		self.clearGestureBindings()
 		log.debug("IME_EXP: IME state and gestures cleared")
-
 
 	def _setNavigatorObject(self, obj: NVDAObject) -> None:
 		if config.conf["reviewCursor"]["followFocus"]:

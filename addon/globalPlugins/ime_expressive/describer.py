@@ -69,8 +69,8 @@ class CandidateDescriber:
 						_(
 							# Translators: Used to describe a character using a word it appears in.
 							# For example: "A as in Apple".
-							"{symbol} as in {description}"
-						).format(symbol=symbol, description=description)
+							"{symbol} as in {description}",
+						).format(symbol=symbol, description=description),
 					)
 			else:
 				describedSymbols.append(symbol)
@@ -125,11 +125,14 @@ class CandidateDescriber:
 		# English words: always speak the word first, then optionally spell it out.
 		if candidate.isascii() and candidate.isalpha() and len(candidate) >= 1:
 			from . import settings
+
 			prefixText = candidate
-			descriptionText = self.describeCharacters(candidate) if settings.isSpellEnglishCandidates() else None
+			descriptionText = (
+				self.describeCharacters(candidate) if settings.isSpellEnglishCandidates() else None
+			)
 			log.debug(
 				f"IME_EXP: buildSpeechParts('{candidate}', english=True) "
-				f"-> prefix={prefixText!r}, description={descriptionText!r}, cancelDescription=False"
+				f"-> prefix={prefixText!r}, description={descriptionText!r}, cancelDescription=False",
 			)
 			return prefixText, descriptionText, False
 		try:
@@ -154,6 +157,6 @@ class CandidateDescriber:
 			descriptionText = self.describeCharacters(candidate)
 		log.debug(
 			f"IME_EXP: buildSpeechParts('{candidate}', len={candidateLen}) "
-			f"-> prefix={prefixText!r}, description={descriptionText!r}, cancelDescription={cancelBeforeDescription}"
+			f"-> prefix={prefixText!r}, description={descriptionText!r}, cancelDescription={cancelBeforeDescription}",
 		)
 		return prefixText, descriptionText, cancelBeforeDescription
