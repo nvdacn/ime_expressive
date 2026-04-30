@@ -24,10 +24,12 @@ addon_info = AddonInfo(
 	addon_description=_("""This add-on provides Chinese input method support for the NVDA screen reader.
 It enhances the Chinese input experience in terms of input habits and efficiency for NVDA users."""),
 	# version
-	addon_version="2026.3.25",
+	addon_version="2026.4.30",
 	# Brief changelog for this version
 	# Translators: what's new content for the add-on version to be shown in the add-on store
-	addon_changelog=_("""Compatible with NVDA 2026.1."""),
+	addon_changelog=_("""### 2026.4.30
+
+Bump version."""),
 	# Author(s)
 	addon_author="Cary-rowen <manchen_0528@outlook.com>, Chenfu <394434124@qq.com>, hwf1324 <1398969445@qq.com>",
 	# URL for the add-on documentation support
