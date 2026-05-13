@@ -294,12 +294,14 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 						self.handleInputCandidateListUpdate(candidateText, 0, "ms")
 						self._setNavigatorObject(target)
 			except Exception:
-				log.debugWarning("IME_EXP: Error processing modern IME window")
+				log.debugWarning("IME_EXP: Error processing modern IME window", exc_info=True)
 			return
 		try:
 			nextHandler()
 		except TypeError:
-			log.debugWarning("IME_EXP: Suppressed TypeError in windowOpen (UIA element not ready)")
+			log.debugWarning(
+				"IME_EXP: Suppressed TypeError in windowOpen (UIA element not ready)", exc_info=True
+			)
 
 	def event_UIA_elementSelected(self, obj: NVDAObject, nextHandler: Callable[[], None]) -> None:
 		if self._uia.isModernImeProcess(obj):
@@ -308,14 +310,31 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 					firstChild = obj.firstChild
 					lastChild = obj.lastChild
 					if firstChild and lastChild:
-						self._uia.isMicrosoftPinyinFromUia = True
-						self._state.isMicrosoftPinyin = True
-						self.handleInputCandidateListUpdate(lastChild.name, int(firstChild.name) - 1, "ms")
-						self._setNavigatorObject(obj)
+						candidateNumber = int(firstChild.name)
+						if candidateNumber < 1:
+							log.debug(
+								f"IME_EXP: Ignoring invalid modern IME candidate number: {candidateNumber}"
+							)
+						else:
+							candidateText = lastChild.name or ""
+							if candidateText:
+								self._uia.isMicrosoftPinyinFromUia = True
+								self._state.isMicrosoftPinyin = True
+								self.handleInputCandidateListUpdate(candidateText, candidateNumber - 1, "ms")
+								self._setNavigatorObject(obj)
+								return
+							log.debug("IME_EXP: Ignoring empty modern IME candidate text")
+			except (TypeError, ValueError):
+				log.debugWarning("IME_EXP: Failed to parse modern IME selected candidate", exc_info=True)
 			except Exception:
-				pass
-			return
-		nextHandler()
+				log.debugWarning("IME_EXP: Error processing modern IME selected candidate", exc_info=True)
+		try:
+			nextHandler()
+		except TypeError:
+			log.debugWarning(
+				"IME_EXP: Suppressed TypeError in elementSelected (UIA element not ready)",
+				exc_info=True,
+			)
 
 	def event_nameChange(self, obj: NVDAObject, nextHandler: Callable[[], None]) -> None:
 		try:
@@ -327,13 +346,19 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 			):
 				previous = obj.previous
 				if previous and previous.name:
-					self._state.recordCandidateSelection(int(previous.name), obj.name)
+					candidateName = obj.name or ""
+					if candidateName:
+						self._state.recordCandidateSelection(int(previous.name), candidateName)
+		except (TypeError, ValueError):
+			log.debugWarning("IME_EXP: Failed to parse modern IME candidate name change", exc_info=True)
 		except Exception:
-			pass
+			log.debugWarning("IME_EXP: Error recording modern IME candidate name change", exc_info=True)
 		try:
 			nextHandler()
 		except TypeError:
-			log.debugWarning("IME_EXP: Suppressed TypeError in nameChange (UIA element not ready)")
+			log.debugWarning(
+				"IME_EXP: Suppressed TypeError in nameChange (UIA element not ready)", exc_info=True
+			)
 
 	@property
 	def _inputConversionModeMessages(self) -> dict[int, tuple[str, str]]:
@@ -433,7 +458,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 				self.handleInputCandidateListUpdate(candidateText, 0, "ms")
 				self._setNavigatorObject(target)
 		except Exception:
-			pass
+			log.debugWarning("IME_EXP: Error processing modern IME composition start", exc_info=True)
 
 	def handleInputCompositionEnd(self, result: str) -> None:
 		log.debug(f"IME_EXP: Composition end: result='{result}'")
