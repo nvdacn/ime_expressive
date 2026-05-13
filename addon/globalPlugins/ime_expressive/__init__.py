@@ -298,7 +298,8 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 			nextHandler()
 		except TypeError:
 			log.debugWarning(
-				"IME_EXP: Suppressed TypeError in windowOpen (UIA element not ready)", exc_info=True
+				"IME_EXP: Suppressed TypeError in windowOpen (UIA element not ready)",
+				exc_info=True,
 			)
 
 	def event_UIA_elementSelected(self, obj: NVDAObject, nextHandler: Callable[[], None]) -> None:
@@ -311,7 +312,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 						candidateNumber = int(firstChild.name)
 						if candidateNumber < 1:
 							log.debug(
-								f"IME_EXP: Ignoring invalid modern IME candidate number: {candidateNumber}"
+								f"IME_EXP: Ignoring invalid modern IME candidate number: {candidateNumber}",
 							)
 						else:
 							candidateText = lastChild.name or ""
@@ -355,7 +356,8 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 			nextHandler()
 		except TypeError:
 			log.debugWarning(
-				"IME_EXP: Suppressed TypeError in nameChange (UIA element not ready)", exc_info=True
+				"IME_EXP: Suppressed TypeError in nameChange (UIA element not ready)",
+				exc_info=True,
 			)
 
 	@property
