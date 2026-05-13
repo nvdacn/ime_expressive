@@ -203,8 +203,19 @@ msgstr ""
 #. Brief changelog for this version
 #. Translators: what's new content for the add-on version to be shown in the add-on store
 #: buildVars.py:32
-msgid "Compatible with NVDA 2026.1."
-msgstr "兼容 NVDA2026.1。"
+msgid ""
+"### 2026.5.14\n"
+"\n"
+"* Fixed possible plugin errors when IME candidate indexes are out of range.\n"
+"* Improved Windows 11 modern IME event handling to avoid interfering with "
+"TextInputHost features such as emoji and clipboard history.\n"
+"* Improved stability when the add-on is reloaded or unloaded."
+msgstr ""
+"### 2026.5.14\n"
+"\n"
+"* 修复候选索引异常时可能导致插件报错的问题。\n"
+"* 改进 Windows 11 现代输入法事件处理，避免影响 emoji、剪贴板历史等 TextInputHost 功能。\n"
+"* 改进插件重载或卸载时的稳定性。"
 
 #~ msgid "兼容 NVDA2026.1Beta"
 #~ msgstr "兼容 NVDA2026.1Beta"
