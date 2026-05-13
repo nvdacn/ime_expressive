@@ -178,19 +178,27 @@ class ImeStateManager:
 		"""
 		if self.shouldSkipUpdate(candidatesString, selectionIndex, compositionString, inputMethod):
 			return None
+		isMultiCandidate = "\n" in candidatesString
+		if isMultiCandidate:
+			candidateList = candidatesString.split("\n")
+			if not 0 <= selectionIndex < len(candidateList):
+				log.debug(
+					f"IME_EXP: Skipping candidate update - selection index {selectionIndex} "
+					f"out of range for {len(candidateList)} candidates",
+				)
+				return None
+			candidate = candidateList[selectionIndex].replace(" ", "")
+		else:
+			candidateList = self.candidateList
+			if not self.isMicrosoftPinyin:
+				candidateList = [*self.candidateList, candidatesString]
+			candidate = candidatesString
+		candidate = candidate.replace("(", "").replace(")", "")
 		self.lastCandidatesString = candidatesString
 		self.selectedCandidateIndex = selectionIndex
 		self.lastCompositionString = compositionString
 		self.isImeSessionFinished = False
-		isMultiCandidate = "\n" in candidatesString
-		if isMultiCandidate:
-			self.candidateList = candidatesString.split("\n")
-			candidate = self.candidateList[selectionIndex].replace(" ", "")
-		else:
-			if not self.isMicrosoftPinyin:
-				self.candidateList.append(candidatesString)
-			candidate = candidatesString
-		candidate = candidate.replace("(", "").replace(")", "")
+		self.candidateList = candidateList
 		self.selectedCandidate = candidate
 		log.debug(
 			f"IME_EXP: Candidate update processed: '{candidate}', "
@@ -268,8 +276,8 @@ class ImeStateManager:
 					ch,
 					inputEventToken=inputEventToken,
 				)
-			except Exception:
-				log.debug("IME_EXP: Failed to resolve candidate by index, falling back")
+			except (IndexError, KeyError, TypeError):
+				log.debugWarning("IME_EXP: Failed to resolve candidate by index, falling back", exc_info=True)
 		log.debug("IME_EXP: Composition end - no candidate found, deferring to punctuation check")
 		return self._buildCompositionEndAction(
 			fallbackToPunc=True,
