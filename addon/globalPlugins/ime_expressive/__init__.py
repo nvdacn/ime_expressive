@@ -113,6 +113,9 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 		NVDAHelper.handleInputConversionModeUpdate = self.handleInputConversionModeUpdate
 
 	def terminate(self) -> None:
+		if self._muteTransitionTimer is not None:
+			self._muteTransitionTimer.Stop()
+			self._muteTransitionTimer = None
 		CandidateItem.getFormattedCandidateName = self._originalHooks.get(
 			"CandidateItem.getFormattedCandidateName",
 			CandidateItem.getFormattedCandidateName,
@@ -146,11 +149,11 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 		settings.restoreSettingsPanel()
 		super().terminate()
 
-	def _noopFormatter(self, number: int, candidate: str) -> None:
-		pass
+	def _noopFormatter(self, number: int, candidate: str) -> str:
+		return ""
 
-	def _noopDescFormatter(self, candidate: str) -> None:
-		pass
+	def _noopDescFormatter(self, candidate: str) -> str:
+		return ""
 
 	def _noopReportFocus(self) -> None:
 		pass
