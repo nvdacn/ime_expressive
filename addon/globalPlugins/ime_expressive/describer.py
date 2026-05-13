@@ -144,12 +144,7 @@ class CandidateDescriber:
 		descriptionText: str | None = None
 		cancelBeforeDescription = True
 		# Speak raw candidate as prefix when candidateLen exceeds threshold
-		customCandidate = candidateLen > self._reportThreshold
-		if (
-			candidateLen >= self._reportThreshold + 1
-			and customCandidate
-			and self._reportThreshold != ReportThreshold.NEVER
-		):
+		if self._reportThreshold != ReportThreshold.NEVER and candidateLen > self._reportThreshold:
 			prefixText = candidate
 			cancelBeforeDescription = False  # prefix was spoken, don't cancel it for description
 		# Produce character description when within description mode range

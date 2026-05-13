@@ -52,8 +52,6 @@ VK_9 = 57
 # LCID for Simplified Chinese (used to detect Chinese IME active)
 LCID_CHINESE_SIMPLIFIED = 2052
 
-CONF_SECTION = "imeExpressive"
-
 
 class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 	"""Enhanced Chinese IME feedback for NVDA.
@@ -386,13 +384,9 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 	def handleInputConversionModeUpdate(self, oldFlags: int, newFlags: int, lcid: int) -> None:
 		log.debug(f"IME_EXP: Conversion mode: {oldFlags} -> {newFlags}, lcid={lcid}")
 		self._clearIme()
-		for x in range(32):
-			x_val = 2**x
-			msgs = self._inputConversionModeMessages.get(x_val)
-			if not msgs:
-				continue
-			newOn = bool(newFlags & x_val)
-			oldOn = bool(oldFlags & x_val)
+		for flag, msgs in self._inputConversionModeMessages.items():
+			newOn = bool(newFlags & flag)
+			oldOn = bool(oldFlags & flag)
 			if newOn != oldOn:
 				self._speakCharacter(msgs[0] if newOn else msgs[1], cancelFirst=False)
 				break
@@ -595,9 +589,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 		length = len(self._state.selectedCandidate)
 		if self._state.selectedCandidate and length > 1:
 			KeyboardInputGesture.fromName("escape").send()
-			chList = list(self._state.selectedCandidate)
-			for c in range(length):
-				ch = chList.pop()
+			for ch in reversed(self._state.selectedCandidate):
 				if unicodedata.category(ch) == "Lo":
 					queueHandler.queueFunction(queueHandler.eventQueue, speech.cancelSpeech)
 					wx.CallAfter(brailleInput.handler.sendChars, ch)
