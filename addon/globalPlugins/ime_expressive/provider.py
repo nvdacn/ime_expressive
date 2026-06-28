@@ -302,6 +302,14 @@ class ImeStateManager:
 		self._clearCompositionEndSnapshot()
 		log.debug("IME_EXP: IME session started")
 
+	def selectCandidateByIndex(self, index: int) -> None:
+		if self.candidateList and 0 < index <= len(self.candidateList):
+			self.selectedCandidateIndex = index
+			self.selectedCandidate = cleanListCandidate(self.candidateList[index - 1])
+		else:
+			self.selectedCandidateIndex = 0
+			self.selectedCandidate = ""
+
 	def recordCandidateSelection(self, index: int, name: str) -> None:
 		"""Record a candidate selection from modern IME UIA nameChange events."""
 		self.modernImeCandidateMap[index] = name

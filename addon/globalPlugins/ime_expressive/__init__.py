@@ -39,7 +39,6 @@ from NVDAObjects.behaviors import CandidateItem
 from NVDAObjects.UIA import UIA
 
 from . import settings
-from .candidateText import cleanListCandidate
 from .describer import CandidateDescriber
 from .provider import ImeStateManager
 from .uiaHelper import ModernImeHelper
@@ -564,14 +563,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 	def script_pressKey(self, gesture: KeyboardInputGesture) -> None:
 		keyCode = gesture.vkCode
 		if VK_1 <= keyCode <= VK_9:
-			idx = int(chr(keyCode))
-			if self._state.candidateList and 0 < idx <= len(self._state.candidateList):
-				self._state.selectedCandidateIndex = idx
-				raw = cleanListCandidate(self._state.candidateList[idx - 1])
-				self._state.selectedCandidate = raw
-			else:
-				self._state.selectedCandidateIndex = 0
-				self._state.selectedCandidate = ""
+			self._state.selectCandidateByIndex(int(chr(keyCode)))
 		elif keyCode == VK_ESCAPE:
 			self._clearIme()
 		if NVDAHelper.lastLayoutString != self._state.lastLayoutString:
