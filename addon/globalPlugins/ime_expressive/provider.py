@@ -17,7 +17,8 @@ from dataclasses import dataclass
 
 from logHandler import log
 
-_CANDIDATE_CLEANUP_TABLE = str.maketrans("", "", " ()")
+_MULTI_CANDIDATE_CLEANUP_TABLE = str.maketrans("", "", " ()")
+_SINGLE_CANDIDATE_CLEANUP_TABLE = str.maketrans("", "", "()")
 
 
 @dataclass
@@ -188,13 +189,12 @@ class ImeStateManager:
 					f"out of range for {len(candidateList)} candidates",
 				)
 				return None
-			candidate = candidateList[selectionIndex]
+			candidate = candidateList[selectionIndex].translate(_MULTI_CANDIDATE_CLEANUP_TABLE)
 		else:
 			candidateList = self.candidateList
 			if not self.isMicrosoftPinyin:
 				candidateList = [*self.candidateList, candidatesString]
-			candidate = candidatesString
-		candidate = candidate.translate(_CANDIDATE_CLEANUP_TABLE)
+			candidate = candidatesString.translate(_SINGLE_CANDIDATE_CLEANUP_TABLE)
 		self.lastCandidatesString = candidatesString
 		self.selectedCandidateIndex = selectionIndex
 		self.lastCompositionString = compositionString

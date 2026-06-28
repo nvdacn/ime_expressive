@@ -555,11 +555,13 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 		keyCode = gesture.vkCode
 		if VK_1 <= keyCode <= VK_9:
 			idx = int(chr(keyCode))
-			self._state.selectedCandidateIndex = idx
 			if self._state.candidateList and 0 < idx <= len(self._state.candidateList):
+				self._state.selectedCandidateIndex = idx
 				raw = self._state.candidateList[idx - 1].translate(_CANDIDATE_CLEANUP_TABLE)
-				if raw:
-					self._state.selectedCandidate = raw
+				self._state.selectedCandidate = raw
+			else:
+				self._state.selectedCandidateIndex = 0
+				self._state.selectedCandidate = ""
 		elif keyCode == VK_ESCAPE:
 			self._clearIme()
 		if NVDAHelper.lastLayoutString != self._state.lastLayoutString:
