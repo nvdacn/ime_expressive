@@ -19,7 +19,6 @@ import addonHandler
 import config
 import gui
 import wx
-from logHandler import log
 
 from .enums import DescriptionMode, NavigateKeyMode, ReportThreshold, SelectKeyMode
 
@@ -40,7 +39,6 @@ confspec: dict[str, str] = {
 
 def initConfig() -> None:
 	config.conf.spec[CONF_SECTION] = confspec
-	log.debug("IME_EXP: Config spec registered")
 
 
 def getDescriptionMode() -> DescriptionMode:
@@ -207,7 +205,6 @@ def _onSave(self) -> None:
 	config.conf[CONF_SECTION]["reportCompositionStringChanges"] = (
 		self.imeReportCompChangesCheckBox.IsChecked()
 	)
-	log.debug("IME_EXP: Settings saved")
 	for cb in _saveCallbacks:
 		cb()
 
@@ -236,7 +233,6 @@ def installSettingsPanel() -> None:
 	_original_onSave = gui.settingsDialogs.InputCompositionPanel.onSave
 	gui.settingsDialogs.InputCompositionPanel.makeSettings = _makeSettings
 	gui.settingsDialogs.InputCompositionPanel.onSave = _onSave
-	log.debug("IME_EXP: Settings panel monkey-patched")
 
 
 def restoreSettingsPanel() -> None:
@@ -248,7 +244,6 @@ def restoreSettingsPanel() -> None:
 	if _original_onSave:
 		gui.settingsDialogs.InputCompositionPanel.onSave = _original_onSave
 		_original_onSave = None
-	log.debug("IME_EXP: Settings panel restored")
 
 
 def buildGestureMap() -> dict[str, str]:

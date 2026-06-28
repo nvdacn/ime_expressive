@@ -98,10 +98,6 @@ class ImeStateManager:
 			and inputEventToken == self.lastCompositionEndInputToken
 			and textToSpeak == self.lastCompositionEndText
 		):
-			log.debug(
-				f"IME_EXP: Composition end - skipping duplicate committed text "
-				f"for same input: '{textToSpeak}'",
-			)
 			return CompositionEndAction()
 		if textToSpeak:
 			self.lastCompositionEndText = textToSpeak
@@ -147,7 +143,6 @@ class ImeStateManager:
 	) -> bool:
 		"""Check if this update should be skipped (session finished or exact duplicate)."""
 		if inputMethod == "ms" and self.isImeSessionFinished:
-			log.debug("IME_EXP: Skipping update - session finished for modern IME")
 			return True
 		if not candidatesString:
 			return True
@@ -159,7 +154,6 @@ class ImeStateManager:
 			and selectionIndex == self.selectedCandidateIndex
 			and compositionString == self.lastCompositionString
 		):
-			log.debug("IME_EXP: Skipping exact duplicate candidate update")
 			return True
 		return False
 
@@ -197,10 +191,6 @@ class ImeStateManager:
 		self.isImeSessionFinished = False
 		self.candidateList = candidateList
 		self.selectedCandidate = candidate
-		log.debug(
-			f"IME_EXP: Candidate update processed: '{candidate}', "
-			f"index={selectionIndex}, multi={isMultiCandidate}",
-		)
 		return CandidateUpdate(
 			candidate=candidate,
 			isMultiCandidate=isMultiCandidate,
@@ -221,33 +211,20 @@ class ImeStateManager:
 		) = self._getCompositionEndContext(inputEventToken)
 		if result:
 			if self.isMicrosoftPinyin:
-				log.debug(
-					f"IME_EXP: Composition end - trusting committed result from modern Microsoft IME: '{result}'",
-				)
 				return self._buildCompositionEndAction(result, inputEventToken=inputEventToken)
 			# When we have a tracked candidate, validate result against it to reject
 			# stale compositionEnd events (for example, a partial result arriving
 			# just before the final committed text).
 			if selectedCandidate:
 				if result in selectedCandidate or selectedCandidate in result:
-					log.debug(f"IME_EXP: Composition end - result matches selected candidate: '{result}'")
 					return self._buildCompositionEndAction(result, inputEventToken=inputEventToken)
-				log.debug(
-					f"IME_EXP: Composition end - result '{result}' doesn't match "
-					f"selected candidate '{selectedCandidate}', waiting for follow-up",
-				)
 				self._captureCompositionEndSnapshot(inputEventToken)
 				return CompositionEndAction(awaitMoreResults=True)
 			if not lastCandidatesString or result in lastCandidatesString:
-				log.debug(f"IME_EXP: Composition end - result matches candidates: '{result}'")
 				return self._buildCompositionEndAction(result, inputEventToken=inputEventToken)
-			log.debug(
-				f"IME_EXP: Composition end - result '{result}' not in candidates, waiting for follow-up",
-			)
 			self._captureCompositionEndSnapshot(inputEventToken)
 			return CompositionEndAction(awaitMoreResults=True)
 		if selectedCandidate:
-			log.debug(f"IME_EXP: Composition end - using selected candidate: '{selectedCandidate}'")
 			return self._buildCompositionEndAction(
 				selectedCandidate,
 				inputEventToken=inputEventToken,
@@ -263,20 +240,13 @@ class ImeStateManager:
 					end -= 1
 				ch = ch[:end]
 				if not ch:
-					log.debug(
-						f"IME_EXP: Composition end - resolved empty candidate from index {selectedCandidateIndex}",
-					)
 					return CompositionEndAction()
-				log.debug(
-					f"IME_EXP: Composition end - resolved from index {selectedCandidateIndex}: '{ch}'",
-				)
 				return self._buildCompositionEndAction(
 					ch,
 					inputEventToken=inputEventToken,
 				)
 			except (IndexError, KeyError, TypeError):
 				log.debugWarning("IME_EXP: Failed to resolve candidate by index, falling back", exc_info=True)
-		log.debug("IME_EXP: Composition end - no candidate found, deferring to punctuation check")
 		return self._buildCompositionEndAction(
 			fallbackToPunc=True,
 			inputEventToken=inputEventToken,
@@ -284,7 +254,6 @@ class ImeStateManager:
 
 	def clear(self) -> None:
 		"""Reset all IME session state."""
-		log.debug("IME_EXP: Clearing IME session state")
 		self.isImeSessionFinished = True
 		self.lastCandidatesString = ""
 		self.selectedCandidate = ""
@@ -300,7 +269,6 @@ class ImeStateManager:
 		self.lastCompositionEndText = ""
 		self.lastCompositionEndInputToken = None
 		self._clearCompositionEndSnapshot()
-		log.debug("IME_EXP: IME session started")
 
 	def selectCandidateByIndex(self, index: int) -> None:
 		if self.candidateList and 0 < index <= len(self.candidateList):
@@ -313,4 +281,3 @@ class ImeStateManager:
 	def recordCandidateSelection(self, index: int, name: str) -> None:
 		"""Record a candidate selection from modern IME UIA nameChange events."""
 		self.modernImeCandidateMap[index] = name
-		log.debug(f"IME_EXP: Modern IME candidate recorded: [{index}] = '{name}'")

@@ -18,7 +18,6 @@ These IDs are sourced from NVDA's built-in appModule:
 from __future__ import annotations
 
 import winVersion
-from logHandler import log
 from NVDAObjects import NVDAObject
 from NVDAObjects.behaviors import CandidateItem
 
@@ -88,12 +87,10 @@ class ModernImeHelper:
 			self._cachedWindow = firstChild if firstChild else obj
 		else:
 			self._cachedWindow = obj
-		log.debug(f"IME_EXP: Cached modern IME window (Win11={isWin11})")
 
 	def invalidateCache(self) -> None:
 		self._cachedWindow = None
 		self.isMicrosoftPinyinFromUia = False
-		log.debug("IME_EXP: Modern IME cache invalidated")
 
 	def findCandidateTarget(self) -> tuple[NVDAObject, str] | None:
 		"""Try to find the candidate target from the cached modern IME window.
@@ -114,8 +111,7 @@ class ModernImeHelper:
 					lastChild = target.lastChild
 					candidateText = lastChild.name if lastChild else ""
 					self.isMicrosoftPinyinFromUia = True
-					log.debug(f"IME_EXP: Found UIA candidate target: '{candidateText}'")
 					return target, candidateText
 		except Exception:
-			log.debug("IME_EXP: Failed to find candidate target from cached window")
+			pass
 		return None

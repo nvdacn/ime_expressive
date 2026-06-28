@@ -157,7 +157,6 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 
 	def _onSettingsSaved(self) -> None:
 		self._entryGestures = settings.buildGestureMap()
-		log.debug("IME_EXP: Gesture map rebuilt after settings change")
 
 	def _onDecideExecuteGesture(self, gesture: inputCore.InputGesture) -> bool:
 		if gesture.isModifier:
@@ -213,9 +212,6 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 			return False
 		if self._isModernMicrosoftPinyinTypedCharacterTarget(realFocus, ch):
 			return False
-		log.debug(
-			f"IME_EXP: Redirecting typedCharacter from IME UIA object to real focus: {ch!r}",
-		)
 		eventHandler.executeEvent("typedCharacter", realFocus, ch=ch)
 		return True
 
@@ -223,7 +219,6 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 		if self._tryRedirectTypedCharacterToRealFocus(obj, ch):
 			return
 		if self._shouldSuppressTypedEcho(ch):
-			log.debug(f"IME_EXP: Suppressing typedCharacter during IME session: {ch!r}")
 			return
 		try:
 			nextHandler()
@@ -242,10 +237,8 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 		if self._uia.isModernImeProcess(obj) and not self._state.isImeSessionFinished:
 			return
 		if self._shouldMuteReturnTransition:
-			log.debug(f"IME_EXP: Muting return foreground on {obj.name}")
 			return
 		if self._state.isMicrosoftPinyin and not self._state.isImeSessionFinished:
-			log.debug(f"IME_EXP: Suppressing foreground during active IME session on {obj.name}")
 			return
 		nextHandler()
 
@@ -267,7 +260,6 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 		if self._uia.isModernImeProcess(obj) and not self._state.isImeSessionFinished:
 			return
 		if self._shouldMuteReturnTransition:
-			log.debug(f"IME_EXP: Muting return gainFocus on {obj.name}.")
 			return
 		if self._uia.isMicrosoftPinyinFromUia and isinstance(obj, UIA):
 			self._uia.isMicrosoftPinyinFromUia = False
@@ -278,7 +270,6 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 		if self._uia.isImeCandidateWindow(obj):
 			self._state.isMicrosoftPinyin = True
 			self._state.startSession()
-			log.debug("IME_EXP: Modern IME candidate window opened")
 			try:
 				firstChild = obj.firstChild
 				if firstChild and firstChild.firstChild:
@@ -321,7 +312,6 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 								self.handleInputCandidateListUpdate(candidateText, candidateNumber - 1, "ms")
 								self._setNavigatorObject(obj)
 								return
-							log.debug("IME_EXP: Ignoring empty modern IME candidate text")
 			except (TypeError, ValueError):
 				log.debugWarning("IME_EXP: Failed to parse modern IME selected candidate", exc_info=True)
 			except Exception:
@@ -383,7 +373,6 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 		}
 
 	def handleInputConversionModeUpdate(self, oldFlags: int, newFlags: int, lcid: int) -> None:
-		log.debug(f"IME_EXP: Conversion mode: {oldFlags} -> {newFlags}, lcid={lcid}")
 		self._clearIme()
 		for flag, msgs in self._inputConversionModeMessages.items():
 			newOn = bool(newFlags & flag)
@@ -398,10 +387,6 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 		selectionIndex: int,
 		inputMethod: str,
 	) -> None:
-		log.debug(
-			f"IME_EXP: Candidate list update: string='{candidatesString}', "
-			f"index={selectionIndex}, method={inputMethod}",
-		)
 		self._describer.descriptionMode = settings.getDescriptionMode()
 		self._describer.reportThreshold = settings.getReportThreshold()
 		if NVDAHelper.lastLayoutString != self._state.lastLayoutString:
@@ -440,7 +425,6 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 		selectionEnd: int,
 		isReading: bool,
 	) -> None:
-		log.debug(f"IME_EXP: Composition start: '{compositionString}'")
 		self._currentCompositionString = compositionString.strip()
 		self._state.startSession()
 		speech.clearTypedWordBuffer()
@@ -456,7 +440,6 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 			log.debugWarning("IME_EXP: Error processing modern IME composition start", exc_info=True)
 
 	def handleInputCompositionEnd(self, result: str) -> None:
-		log.debug(f"IME_EXP: Composition end: result='{result}'")
 		if settings.isReportCompositionStringChanges():
 			action = self._state.resolveCompositionEnd(
 				result,
@@ -557,7 +540,6 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 				self._setNavigatorObject(api.getFocusObject())
 		self._uia.invalidateCache()
 		self.clearGestureBindings()
-		log.debug("IME_EXP: IME state and gestures cleared")
 
 	def _setNavigatorObject(self, obj: NVDAObject) -> None:
 		if config.conf["reviewCursor"]["followFocus"]:

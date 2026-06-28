@@ -13,7 +13,6 @@ the speech text to describe the candidate.
 from __future__ import annotations
 
 import characterProcessing
-from logHandler import log
 
 from .candidateText import cleanListCandidate
 from .enums import DescriptionMode, ReportThreshold
@@ -75,9 +74,7 @@ class CandidateDescriber:
 					)
 			else:
 				describedSymbols.append(symbol)
-		result = " ".join(describedSymbols)
-		log.debug(f"IME_EXP: describeCharacters('{candidate}') -> '{result}'")
-		return result
+		return " ".join(describedSymbols)
 
 	def computeEffectiveLength(self, candidate: str) -> int:
 		"""Compute candidate length ignoring trailing lowercase ASCII letters.
@@ -131,15 +128,10 @@ class CandidateDescriber:
 			descriptionText = (
 				self.describeCharacters(candidate) if settings.isSpellEnglishCandidates() else None
 			)
-			log.debug(
-				f"IME_EXP: buildSpeechParts('{candidate}', english=True) "
-				f"-> prefix={prefixText!r}, description={descriptionText!r}, cancelDescription=False",
-			)
 			return prefixText, descriptionText, False
 		try:
 			candidateLen = self.computeEffectiveLength(candidate)
 		except Exception:
-			log.debug(f"IME_EXP: buildSpeechParts failed to compute length for '{candidate}'")
 			return None, candidate, True
 		prefixText: str | None = None
 		descriptionText: str | None = None
@@ -151,8 +143,4 @@ class CandidateDescriber:
 		# Produce character description when within description mode range
 		if candidateLen <= self._descriptionMode or self._descriptionMode >= DescriptionMode.FULL:
 			descriptionText = self.describeCharacters(candidate)
-		log.debug(
-			f"IME_EXP: buildSpeechParts('{candidate}', len={candidateLen}) "
-			f"-> prefix={prefixText!r}, description={descriptionText!r}, cancelDescription={cancelBeforeDescription}",
-		)
 		return prefixText, descriptionText, cancelBeforeDescription
