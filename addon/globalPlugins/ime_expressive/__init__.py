@@ -51,6 +51,7 @@ VK_1 = 49
 VK_9 = 57
 # LCID for Simplified Chinese (used to detect Chinese IME active)
 LCID_CHINESE_SIMPLIFIED = 2052
+_CANDIDATE_CLEANUP_TABLE = str.maketrans("", "", " ()")
 
 
 class GlobalPlugin(globalPluginHandler.GlobalPlugin):
@@ -556,7 +557,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 			idx = int(chr(keyCode))
 			self._state.selectedCandidateIndex = idx
 			if self._state.candidateList and 0 < idx <= len(self._state.candidateList):
-				raw = self._state.candidateList[idx - 1].replace(" ", "").replace("(", "").replace(")", "")
+				raw = self._state.candidateList[idx - 1].translate(_CANDIDATE_CLEANUP_TABLE)
 				if raw:
 					self._state.selectedCandidate = raw
 		elif keyCode == VK_ESCAPE:

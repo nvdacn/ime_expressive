@@ -17,13 +17,14 @@ from dataclasses import dataclass
 
 from logHandler import log
 
+_CANDIDATE_CLEANUP_TABLE = str.maketrans("", "", " ()")
+
 
 @dataclass
 class CandidateUpdate:
 	"""Result of parsing a candidate list update."""
 
 	candidate: str
-	candidateList: list[str]
 	isMultiCandidate: bool
 
 
@@ -187,13 +188,13 @@ class ImeStateManager:
 					f"out of range for {len(candidateList)} candidates",
 				)
 				return None
-			candidate = candidateList[selectionIndex].replace(" ", "")
+			candidate = candidateList[selectionIndex]
 		else:
 			candidateList = self.candidateList
 			if not self.isMicrosoftPinyin:
 				candidateList = [*self.candidateList, candidatesString]
 			candidate = candidatesString
-		candidate = candidate.replace("(", "").replace(")", "")
+		candidate = candidate.translate(_CANDIDATE_CLEANUP_TABLE)
 		self.lastCandidatesString = candidatesString
 		self.selectedCandidateIndex = selectionIndex
 		self.lastCompositionString = compositionString
@@ -206,7 +207,6 @@ class ImeStateManager:
 		)
 		return CandidateUpdate(
 			candidate=candidate,
-			candidateList=self.candidateList,
 			isMultiCandidate=isMultiCandidate,
 		)
 
@@ -262,8 +262,10 @@ class ImeStateManager:
 					ch = modernImeCandidateMap[selectedCandidateIndex]
 				else:
 					ch = candidateList[selectedCandidateIndex - 1]
-				while ch and unicodedata.category(ch[-1]) != "Lo":
-					ch = ch[:-1]
+				end = len(ch)
+				while end and unicodedata.category(ch[end - 1]) != "Lo":
+					end -= 1
+				ch = ch[:end]
 				if not ch:
 					log.debug(
 						f"IME_EXP: Composition end - resolved empty candidate from index {selectedCandidateIndex}",

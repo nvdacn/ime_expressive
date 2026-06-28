@@ -17,6 +17,8 @@ from logHandler import log
 
 from .enums import DescriptionMode, ReportThreshold
 
+_CANDIDATE_CLEANUP_TABLE = str.maketrans("", "", " ()")
+
 
 class CandidateDescriber:
 	"""Builds speech text for IME candidate descriptions.
@@ -84,10 +86,10 @@ class CandidateDescriber:
 		Some IME candidates have trailing pinyin letters (e.g. "今tian"),
 		this strips them to get the "real" character count.
 		"""
-		temp = candidate
-		while temp and temp[-1].islower():
-			temp = temp[:-1]
-		return len(temp)
+		end = len(candidate)
+		while end and candidate[end - 1].islower():
+			end -= 1
+		return end
 
 	def formatAllCandidates(self, candidatesString: str, selectionIndex: int) -> str:
 		"""Format all candidates for autoReport mode.
@@ -98,7 +100,7 @@ class CandidateDescriber:
 		items = candidatesString.split("\n") if candidatesString else []
 		parts: list[str] = []
 		for i, item in enumerate(items, start=1):
-			candidate = item.replace(" ", "").replace("(", "").replace(")", "")
+			candidate = item.translate(_CANDIDATE_CLEANUP_TABLE)
 			description = self.describeCharacters(candidate) if candidate else item
 			parts.append(f"{description} {i}")
 		if len(parts) > 1:

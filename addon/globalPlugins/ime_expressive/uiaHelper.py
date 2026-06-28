@@ -50,11 +50,8 @@ class ModernImeHelper:
 		for precise IME candidate detection.
 		"""
 		try:
-			return (
-				obj is not None
-				and obj.appModule is not None
-				and obj.appModule.appName.lower() == "textinputhost"
-			)
+			appModule = obj.appModule if obj is not None else None
+			return appModule is not None and appModule.appName.lower() == "textinputhost"
 		except Exception:
 			return False
 
@@ -69,7 +66,8 @@ class ModernImeHelper:
 		try:
 			if obj is None or obj.windowClassName != "Windows.UI.Core.CoreWindow":
 				return False
-			if obj.appModule is None or obj.appModule.appName.lower() != "textinputhost":
+			appModule = obj.appModule
+			if appModule is None or appModule.appName.lower() != "textinputhost":
 				return False
 			firstChild = obj.firstChild
 			if firstChild is None:
@@ -82,17 +80,15 @@ class ModernImeHelper:
 		except Exception:
 			return False
 
-	@property
-	def cachedWindow(self) -> NVDAObject | None:
-		return self._cachedWindow
-
 	def cacheWindow(self, obj: NVDAObject) -> None:
 		"""Cache the modern IME window object, adjusting for Win11 structure."""
-		if winVersion.getWinVer() >= winVersion.WIN11:
-			self._cachedWindow = obj.firstChild if obj.firstChild else obj
+		isWin11 = winVersion.getWinVer() >= winVersion.WIN11
+		if isWin11:
+			firstChild = obj.firstChild
+			self._cachedWindow = firstChild if firstChild else obj
 		else:
 			self._cachedWindow = obj
-		log.debug(f"IME_EXP: Cached modern IME window (Win11={winVersion.getWinVer() >= winVersion.WIN11})")
+		log.debug(f"IME_EXP: Cached modern IME window (Win11={isWin11})")
 
 	def invalidateCache(self) -> None:
 		self._cachedWindow = None
