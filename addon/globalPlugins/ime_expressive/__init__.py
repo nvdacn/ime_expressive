@@ -112,12 +112,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 		NVDAHelper.handleInputConversionModeUpdate = self.handleInputConversionModeUpdate
 
 	def terminate(self) -> None:
-		if self._muteTransitionTimer is not None:
-			self._muteTransitionTimer.Stop()
-			self._muteTransitionTimer = None
-		if self._speakPuncTimer is not None:
-			self._speakPuncTimer.Stop()
-			self._speakPuncTimer = None
+		self._stopTimers()
 		CandidateItem.getFormattedCandidateName = self._originalHooks.get(
 			"CandidateItem.getFormattedCandidateName",
 			CandidateItem.getFormattedCandidateName,
@@ -532,6 +527,14 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 	def _endMuteTransition(self) -> None:
 		self._shouldMuteReturnTransition = False
 		self._muteTransitionTimer = None
+
+	def _stopTimers(self) -> None:
+		if self._muteTransitionTimer is not None:
+			self._muteTransitionTimer.Stop()
+			self._muteTransitionTimer = None
+		if self._speakPuncTimer is not None:
+			self._speakPuncTimer.Stop()
+			self._speakPuncTimer = None
 
 	def _clearIme(self) -> None:
 		"""Reset all IME state, navigator object, and gesture bindings."""
