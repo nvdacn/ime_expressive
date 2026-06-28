@@ -81,6 +81,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 		self._lastInputToken: int | None = None
 		self._nextInputToken: int = 0
 		self._muteTransitionTimer: wx.CallLater | None = None
+		self._speakPuncTimer: wx.CallLater | None = None
 		self._entryGestures: dict[str, str] = settings.buildGestureMap()
 		self._installHooks()
 		inputCore.decide_executeGesture.register(self._onDecideExecuteGesture)
@@ -115,6 +116,9 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 		if self._muteTransitionTimer is not None:
 			self._muteTransitionTimer.Stop()
 			self._muteTransitionTimer = None
+		if self._speakPuncTimer is not None:
+			self._speakPuncTimer.Stop()
+			self._speakPuncTimer = None
 		CandidateItem.getFormattedCandidateName = self._originalHooks.get(
 			"CandidateItem.getFormattedCandidateName",
 			CandidateItem.getFormattedCandidateName,
@@ -468,7 +472,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 				self._clearIme()
 				return
 			if action.fallbackToPunc:
-				wx.CallLater(40, self._speakPunc)
+				self._scheduleSpeakPunc()
 			elif action.textToSpeak is not None:
 				self._speakCharacter(action.textToSpeak)
 				# Let NVDA drop the immediate typed-character echo emitted by some IMEs
@@ -495,7 +499,13 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 			else:
 				speech.speakMessage(character)
 
+	def _scheduleSpeakPunc(self) -> None:
+		if self._speakPuncTimer is not None:
+			self._speakPuncTimer.Stop()
+		self._speakPuncTimer = wx.CallLater(40, self._speakPunc)
+
 	def _speakPunc(self) -> None:
+		self._speakPuncTimer = None
 		charInfo = api.getReviewPosition().copy()
 		charInfo.expand(textInfos.UNIT_CHARACTER)
 		charInfo.collapse()

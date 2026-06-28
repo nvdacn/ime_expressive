@@ -80,8 +80,6 @@ class ImeStateManager:
 		self._pendingModernImeCandidateMap = {}
 
 	def _captureCompositionEndSnapshot(self, inputEventToken: int | None) -> None:
-		if inputEventToken is None:
-			return
 		self._pendingCompositionEndInputToken = inputEventToken
 		self._pendingSelectedCandidate = self.selectedCandidate
 		self._pendingSelectedCandidateIndex = self.selectedCandidateIndex
@@ -124,7 +122,6 @@ class ImeStateManager:
 			and not self.lastCandidatesString
 			and not self.candidateList
 			and not self.modernImeCandidateMap
-			and inputEventToken is not None
 			and inputEventToken == self._pendingCompositionEndInputToken
 		):
 			return (
