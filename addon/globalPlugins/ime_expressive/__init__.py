@@ -39,6 +39,7 @@ from NVDAObjects.behaviors import CandidateItem
 from NVDAObjects.UIA import UIA
 
 from . import settings
+from .candidateText import cleanListCandidate
 from .describer import CandidateDescriber
 from .provider import ImeStateManager
 from .uiaHelper import ModernImeHelper
@@ -51,7 +52,6 @@ VK_1 = 49
 VK_9 = 57
 # LCID for Simplified Chinese (used to detect Chinese IME active)
 LCID_CHINESE_SIMPLIFIED = 2052
-_CANDIDATE_CLEANUP_TABLE = str.maketrans("", "", " ()")
 
 
 class GlobalPlugin(globalPluginHandler.GlobalPlugin):
@@ -567,7 +567,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 			idx = int(chr(keyCode))
 			if self._state.candidateList and 0 < idx <= len(self._state.candidateList):
 				self._state.selectedCandidateIndex = idx
-				raw = self._state.candidateList[idx - 1].translate(_CANDIDATE_CLEANUP_TABLE)
+				raw = cleanListCandidate(self._state.candidateList[idx - 1])
 				self._state.selectedCandidate = raw
 			else:
 				self._state.selectedCandidateIndex = 0

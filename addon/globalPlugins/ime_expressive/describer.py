@@ -15,9 +15,8 @@ from __future__ import annotations
 import characterProcessing
 from logHandler import log
 
+from .candidateText import cleanListCandidate
 from .enums import DescriptionMode, ReportThreshold
-
-_CANDIDATE_CLEANUP_TABLE = str.maketrans("", "", " ()")
 
 
 class CandidateDescriber:
@@ -100,7 +99,7 @@ class CandidateDescriber:
 		items = candidatesString.split("\n") if candidatesString else []
 		parts: list[str] = []
 		for i, item in enumerate(items, start=1):
-			candidate = item.translate(_CANDIDATE_CLEANUP_TABLE)
+			candidate = cleanListCandidate(item)
 			description = self.describeCharacters(candidate) if candidate else item
 			parts.append(f"{description} {i}")
 		if len(parts) > 1:
