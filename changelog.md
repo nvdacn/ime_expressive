@@ -1,3 +1,9 @@
+### 2026.6.28
+
+* Improved reliability when selecting IME candidates with number keys.
+* Fixed some missed or delayed speech in fast IME input scenarios.
+* Reduced unnecessary debug log noise during normal typing.
+
 ### 2026.5.14
 
 * Fixed possible plugin errors when IME candidate indexes are out of range.

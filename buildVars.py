@@ -24,14 +24,14 @@ addon_info = AddonInfo(
 	addon_description=_("""This add-on provides Chinese input method support for the NVDA screen reader.
 It enhances the Chinese input experience in terms of input habits and efficiency for NVDA users."""),
 	# version
-	addon_version="2026.5.14",
+	addon_version="2026.6.28",
 	# Brief changelog for this version
 	# Translators: what's new content for the add-on version to be shown in the add-on store
-	addon_changelog=_("""### 2026.5.14
+	addon_changelog=_("""### 2026.6.28
 
-* Fixed possible plugin errors when IME candidate indexes are out of range.
-* Improved Windows 11 modern IME event handling to avoid interfering with TextInputHost features such as emoji and clipboard history.
-* Improved stability when the add-on is reloaded or unloaded."""),
+* Improved reliability when selecting IME candidates with number keys.
+* Fixed some missed or delayed speech in fast IME input scenarios.
+* Reduced unnecessary debug log noise during normal typing."""),
 	# Author(s)
 	addon_author="Cary-rowen <manchen_0528@outlook.com>, Chenfu <394434124@qq.com>, hwf1324 <1398969445@qq.com>",
 	# URL for the add-on documentation support
