@@ -163,6 +163,15 @@ In general:
 
 Keep your project-specific configuration while incorporating any new settings required by the updated template.
 
+### Resolve pull request template
+
+AddonTemplate provides two pull request templates in `.github/PULL_REQUEST_TEMPLATE/`:
+- `TEMPLATE_PR.md`: For contributions to the AddonTemplate repository itself.
+- `ADDON_PR.md`: For contributions to NVDA add-on repositories.
+
+By default, `.github/PULL_REQUEST_TEMPLATE.md` is a symlink pointing to `PULL_REQUEST_TEMPLATE/TEMPLATE_PR.md`.
+In your add-on repository, update this symlink to point to `PULL_REQUEST_TEMPLATE/ADDON_PR.md` (or replace the symlink with a copy of `ADDON_PR.md`) so that contributors to your add-on receive the add-on pull request template.
+
 ### Other files
 
 For most remaining files, the version provided by AddonTemplate is generally the correct one.
