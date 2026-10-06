@@ -337,6 +337,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 					candidateName = obj.name or ""
 					if candidateName:
 						self._state.recordCandidateSelection(int(previous.name), candidateName)
+						return
 		except (TypeError, ValueError):
 			log.debugWarning("IME_EXP: Failed to parse modern IME candidate name change", exc_info=True)
 		except Exception:
