@@ -1,3 +1,8 @@
+### 2026.10.6
+
+* Fixed Microsoft Pinyin candidate descriptions being interrupted by duplicate default candidate announcements.
+* Synced the add-on with the latest upstream NVDA AddonTemplate.
+
 ### 2026.6.28
 
 * Improved reliability when selecting IME candidates with number keys.
