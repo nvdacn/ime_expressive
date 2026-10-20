@@ -41,7 +41,7 @@ from NVDAObjects.UIA import UIA
 from . import settings
 from .describer import CandidateDescriber
 from .provider import ImeStateManager
-from .uiaHelper import ModernImeHelper
+from .uiaHelper import InputSwitchItem, ModernImeHelper
 
 addonHandler.initTranslation()
 
@@ -85,6 +85,16 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 		self._installHooks()
 		inputCore.decide_executeGesture.register(self._onDecideExecuteGesture)
 		settings.registerSaveCallback(self._onSettingsSaved)
+
+	def chooseNVDAObjectOverlayClasses(self, obj: NVDAObject, clsList: list[type[NVDAObject]]) -> None:
+		if (
+			isinstance(obj, UIA)
+			and obj.role == controlTypes.Role.LISTITEM
+			and obj.UIAElement.cachedClassName == "ModeTile"
+		):
+			root = winUser.getAncestor(obj.windowHandle, winUser.GA_ROOT)
+			if winUser.getClassName(root) == "Shell_InputSwitchTopLevelWindow":
+				clsList.insert(0, InputSwitchItem)
 
 	def _installHooks(self) -> None:
 		"""Monkey-patch NVDAHelper and CandidateItem methods."""

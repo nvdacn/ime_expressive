@@ -20,6 +20,7 @@ from __future__ import annotations
 import winVersion
 from NVDAObjects import NVDAObject
 from NVDAObjects.behaviors import CandidateItem
+from NVDAObjects.UIA import UIA
 
 # UIAAutomationIds that identify IME candidate-related windows.
 # Checked on the firstChild of a TextInputHost window to distinguish
@@ -32,6 +33,14 @@ _IME_CANDIDATE_AUTOMATION_IDS = frozenset(
 		"CandidateWindowControl",
 	},
 )
+
+
+class InputSwitchItem(UIA):
+	def _get_description(self) -> str:
+		description = super()._get_description()
+		if description and (self.name or "").endswith(description):
+			return ""
+		return description
 
 
 class ModernImeHelper:
